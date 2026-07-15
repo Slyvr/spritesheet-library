@@ -154,3 +154,64 @@
 .delete-btn:hover {
   background: rgba(233, 69, 96, 0.25);
 }
+
+/* ─── Tags ─── */
+
+.tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 4px;
+  padding: 4px 6px;
+  min-height: 34px;
+  transition: border-color 0.15s;
+}
+
+.tag-chips:focus-within {
+  border-color: #e94560;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #0f3460;
+  color: #b0c4de;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.tag-remove {
+  background: none;
+  border: none;
+  color: #8899aa;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 1px;
+  transition: color 0.1s;
+}
+
+.tag-remove:hover {
+  color: #e94560;
+}
+
+.tag-input {
+  flex: 1;
+  min-width: 80px;
+  background: transparent !important;
+  border: none !important;
+  color: #e0e0e0;
+  font-size: 12px;
+  padding: 2px 4px !important;
+  outline: none;
+}
+
+.tag-input::placeholder {
+  color: #555;
+}

@@ -11,20 +11,24 @@ export default function SpriteInfoPanel({ sprite, group, spritesheetName, onUpda
 function SpriteEditor({ sprite, spritesheetName, onUpdate }) {
   const [title, setTitle] = useState(sprite.title || '')
   const [description, setDescription] = useState(sprite.description || '')
+  const [tags, setTags] = useState(sprite.tags || [])
+  const [tagInput, setTagInput] = useState('')
   const [dirty, setDirty] = useState(false)
   const timer = useRef(null)
 
-  // Keep refs so the timer always reads latest values
   const titleRef = useRef(title)
   const descRef = useRef(description)
+  const tagsRef = useRef(tags)
   titleRef.current = title
   descRef.current = description
+  tagsRef.current = tags
 
   useEffect(() => {
     setTitle(sprite.title || '')
     setDescription(sprite.description || '')
+    setTags(sprite.tags || [])
     setDirty(false)
-  }, [sprite.row, sprite.col, sprite.title, sprite.description])
+  }, [sprite.row, sprite.col, sprite.title, sprite.description, sprite.tags])
 
   const save = useCallback(() => {
     onUpdate({
@@ -35,6 +39,7 @@ function SpriteEditor({ sprite, spritesheetName, onUpdate }) {
       y: sprite.row * 32,
       title: titleRef.current,
       description: descRef.current,
+      tags: tagsRef.current,
     })
     setDirty(false)
   }, [sprite, onUpdate])
@@ -59,6 +64,24 @@ function SpriteEditor({ sprite, spritesheetName, onUpdate }) {
     schedule()
   }
 
+  const addTag = (e) => {
+    const val = tagInput.trim().toLowerCase()
+    if (e.key === 'Enter' && val && !tags.includes(val)) {
+      const next = [...tags, val]
+      setTags(next)
+      setTagInput('')
+      tagsRef.current = next
+      schedule()
+    }
+  }
+
+  const removeTag = (tag) => {
+    const next = tags.filter(t => t !== tag)
+    setTags(next)
+    tagsRef.current = next
+    schedule()
+  }
+
   return (
     <div className="sprite-info-panel">
       <h2 className="panel-title">Sprite Info</h2>
@@ -72,6 +95,25 @@ function SpriteEditor({ sprite, spritesheetName, onUpdate }) {
         <div className="field-group">
           <label htmlFor="sprite-desc">Description</label>
           <textarea id="sprite-desc" value={description} onChange={handleDescChange} placeholder="Enter sprite description..." rows={5} />
+        </div>
+        <div className="field-group">
+          <label>Tags</label>
+          <div className="tag-chips">
+            {tags.map(tag => (
+              <span key={tag} className="tag-chip">
+                {tag}
+                <button className="tag-remove" onClick={() => removeTag(tag)}>&times;</button>
+              </span>
+            ))}
+            <input
+              className="tag-input"
+              type="text"
+              value={tagInput}
+              onChange={e => setTagInput(e.target.value)}
+              onKeyDown={addTag}
+              placeholder={tags.length ? 'Add tag...' : 'Type a tag and press Enter...'}
+            />
+          </div>
         </div>
       </div>
       <AutoSaveIndicator dirty={dirty} />
