@@ -12,6 +12,7 @@ export default function SpriteSheetViewer({
   onSelectSprite,
 }) {
   const canvasRef = useRef(null)
+  const containerRef = useRef(null)
   const [zoom, setZoom] = useState(3)
   const [dragStart, setDragStart] = useState(null)
   const [offset, setOffset] = useState({ x: 0, y: 0 })
@@ -147,17 +148,24 @@ export default function SpriteSheetViewer({
     setDragStart(null)
   }
 
-  const handleWheel = (e) => {
-    e.preventDefault()
-    const delta = e.deltaY > 0 ? -1 : 1
-    const idx = SCALE_FACTORS.indexOf(zoom)
-    if (idx === -1) {
-      setZoom(SCALE_FACTORS[Math.max(0, Math.min(SCALE_FACTORS.length - 1, Math.round(zoom) + delta))])
-    } else {
-      const newIdx = Math.max(0, Math.min(SCALE_FACTORS.length - 1, idx + delta))
-      setZoom(SCALE_FACTORS[newIdx])
+  // Attach wheel listener as non-passive so preventDefault works
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const handler = (e) => {
+      e.preventDefault()
+      const delta = e.deltaY > 0 ? -1 : 1
+      const idx = SCALE_FACTORS.indexOf(zoom)
+      if (idx === -1) {
+        setZoom(SCALE_FACTORS[Math.max(0, Math.min(SCALE_FACTORS.length - 1, Math.round(zoom) + delta))])
+      } else {
+        const newIdx = Math.max(0, Math.min(SCALE_FACTORS.length - 1, idx + delta))
+        setZoom(SCALE_FACTORS[newIdx])
+      }
     }
-  }
+    el.addEventListener('wheel', handler, { passive: false })
+    return () => el.removeEventListener('wheel', handler)
+  }, [zoom])
 
   return (
     <div className="spritesheet-viewer">
@@ -185,7 +193,7 @@ export default function SpriteSheetViewer({
       </div>
       <div
         className="canvas-container"
-        onWheel={handleWheel}
+        ref={containerRef}
       >
         <canvas
           ref={canvasRef}
