@@ -53,10 +53,20 @@ function loadSpriteData(sheetName) {
     columns: COLS,
     rows: ROWS,
     sprites,
+    groups: [],
   };
 
   // Write the default data
   fs.writeFileSync(jsonPath, JSON.stringify(data, null, 2), 'utf-8');
+  return data;
+}
+
+/**
+ * Load sprite data, ensuring groups field exists on existing files.
+ */
+function loadSpriteDataWithGroups(sheetName) {
+  const data = loadSpriteData(sheetName);
+  if (!data.groups) data.groups = [];
   return data;
 }
 
@@ -78,7 +88,7 @@ app.get('/api/sprite-data/:sheetName', (req, res) => {
       return res.status(404).json({ error: 'Spritesheet not found' });
     }
 
-    const data = loadSpriteData(sheetName);
+    const data = loadSpriteDataWithGroups(sheetName);
     res.json(data);
   } catch (err) {
     console.error('Error loading sprite data:', err);
@@ -112,6 +122,38 @@ app.put('/api/sprite-data/:sheetName', (req, res) => {
   } catch (err) {
     console.error('Error saving sprite data:', err);
     res.status(500).json({ error: 'Failed to save sprite data' });
+  }
+});
+
+// PUT /api/groups/:sheetName - Replace the full groups array (auto-save)
+app.put('/api/groups/:sheetName', (req, res) => {
+  try {
+    const { sheetName } = req.params;
+    const { groups } = req.body;
+    if (!Array.isArray(groups)) {
+      return res.status(400).json({ error: 'groups must be an array' });
+    }
+    const data = loadSpriteDataWithGroups(sheetName);
+    data.groups = groups;
+    saveSpriteData(sheetName, data);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error saving groups:', err);
+    res.status(500).json({ error: 'Failed to save groups' });
+  }
+});
+
+// DELETE /api/groups/:sheetName/:groupId - Remove a group by ID
+app.delete('/api/groups/:sheetName/:groupId', (req, res) => {
+  try {
+    const { sheetName, groupId } = req.params;
+    const data = loadSpriteDataWithGroups(sheetName);
+    data.groups = data.groups.filter(g => g.id !== groupId);
+    saveSpriteData(sheetName, data);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting group:', err);
+    res.status(500).json({ error: 'Failed to delete group' });
   }
 });
 

@@ -62,6 +62,20 @@
   font-style: italic;
 }
 
+.mode-indicator {
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: auto;
+}
+
+.mode-indicator.group {
+  color: #e94560;
+}
+
+.mode-indicator.sprite {
+  color: #888;
+}
+
 .canvas-container {
   flex: 1;
   overflow: hidden;

@@ -8,12 +8,16 @@ const SPRITESHEETS = [
   { name: 'terrain_atlas.png', label: 'Terrain Atlas' },
 ]
 
+let groupIdCounter = 0
+
 export default function App() {
   const [activeSheet, setActiveSheet] = useState(SPRITESHEETS[0])
   const [spriteData, setSpriteData] = useState(null)
   const [selectedSprite, setSelectedSprite] = useState(null)
   const [selectedRow, setSelectedRow] = useState(null)
   const [selectedCol, setSelectedCol] = useState(null)
+  const [selectedGroupId, setSelectedGroupId] = useState(null)
+  const [mode, setMode] = useState('sprite') // 'sprite' | 'group'
   const [loading, setLoading] = useState(true)
 
   const loadSpriteData = useCallback(async (sheet) => {
@@ -21,10 +25,12 @@ export default function App() {
     setSelectedSprite(null)
     setSelectedRow(null)
     setSelectedCol(null)
+    setSelectedGroupId(null)
     try {
       const res = await fetch(`/api/sprite-data/${sheet.name}`)
       if (!res.ok) throw new Error('Failed to load')
       const data = await res.json()
+      if (!data.groups) data.groups = []
       setSpriteData(data)
     } catch (err) {
       console.error('Error loading sprite data:', err)
@@ -38,6 +44,20 @@ export default function App() {
   }, [activeSheet, loadSpriteData])
 
   const handleSelectSprite = (row, col) => {
+    if (mode === 'group') {
+      // In group mode, clicking selects the group containing this cell
+      const group = spriteData?.groups?.find(g =>
+        g.cells.some(c => c.row === row && c.col === col)
+      )
+      if (group) {
+        setSelectedGroupId(group.id)
+        setSelectedSprite(null)
+        setSelectedRow(row)
+        setSelectedCol(col)
+      }
+      return
+    }
+    setSelectedGroupId(null)
     setSelectedRow(row)
     setSelectedCol(col)
     if (spriteData) {
@@ -48,8 +68,6 @@ export default function App() {
 
   const handleUpdateSprite = async (updatedSprite) => {
     setSelectedSprite(updatedSprite)
-
-    // Optimistically update the full sprite data
     setSpriteData(prev => {
       if (!prev) return prev
       const sprites = [...prev.sprites]
@@ -61,8 +79,6 @@ export default function App() {
       }
       return { ...prev, sprites }
     })
-
-    // Auto-save to backend
     try {
       await fetch(`/api/sprite-data/${activeSheet.name}`, {
         method: 'PUT',
@@ -73,6 +89,64 @@ export default function App() {
       console.error('Auto-save failed:', err)
     }
   }
+
+  // ── Group operations ──
+
+  const syncGroups = async (groups) => {
+    try {
+      await fetch(`/api/groups/${activeSheet.name}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ groups }),
+      })
+    } catch (err) {
+      console.error('Group save failed:', err)
+    }
+  }
+
+  const handleCreateGroup = (cells) => {
+    if (!cells || cells.length < 2) return
+    const newGroup = {
+      id: `g${++groupIdCounter}`,
+      cells: cells.map(({ row, col }) => ({ row, col })),
+      title: '',
+      description: '',
+    }
+    setSpriteData(prev => {
+      if (!prev) return prev
+      const groups = [...(prev.groups || []), newGroup]
+      syncGroups(groups)
+      return { ...prev, groups }
+    })
+    setSelectedGroupId(newGroup.id)
+    setSelectedSprite(null)
+  }
+
+  const handleUpdateGroup = async (updatedGroup) => {
+    setSpriteData(prev => {
+      if (!prev) return prev
+      const groups = (prev.groups || []).map(g =>
+        g.id === updatedGroup.id ? updatedGroup : g
+      )
+      syncGroups(groups)
+      return { ...prev, groups }
+    })
+  }
+
+  const handleDeleteGroup = (groupId) => {
+    setSpriteData(prev => {
+      if (!prev) return prev
+      const groups = (prev.groups || []).filter(g => g.id !== groupId)
+      syncGroups(groups)
+      return { ...prev, groups }
+    })
+    setSelectedGroupId(null)
+    setSelectedSprite(null)
+  }
+
+  const selectedGroup = selectedGroupId
+    ? spriteData?.groups?.find(g => g.id === selectedGroupId) || null
+    : null
 
   return (
     <div className="app">
@@ -89,6 +163,20 @@ export default function App() {
             </button>
           ))}
         </nav>
+        <div className="mode-toggle">
+          <button
+            className={`mode-btn ${mode === 'sprite' ? 'active' : ''}`}
+            onClick={() => { setMode('sprite'); setSelectedGroupId(null) }}
+          >
+            Sprite
+          </button>
+          <button
+            className={`mode-btn ${mode === 'group' ? 'active' : ''}`}
+            onClick={() => { setMode('group'); setSelectedSprite(null) }}
+          >
+            Group
+          </button>
+        </div>
       </header>
 
       <main className="app-main">
@@ -99,9 +187,12 @@ export default function App() {
             <SpriteSheetViewer
               spritesheetUrl={`/spritesheets/${activeSheet.name}`}
               spriteData={spriteData}
+              mode={mode}
               selectedRow={selectedRow}
               selectedCol={selectedCol}
+              selectedGroupId={selectedGroupId}
               onSelectSprite={handleSelectSprite}
+              onCreateGroup={handleCreateGroup}
             />
           ) : (
             <div className="loading">Failed to load sprite data</div>
@@ -109,15 +200,28 @@ export default function App() {
         </div>
 
         <aside className="info-panel">
-          {selectedSprite ? (
+          {mode === 'group' && selectedGroup ? (
             <SpriteInfoPanel
+              key={`group-${selectedGroup.id}`}
+              group={selectedGroup}
+              spritesheetName={activeSheet.name}
+              onUpdateGroup={handleUpdateGroup}
+              onDeleteGroup={handleDeleteGroup}
+            />
+          ) : !selectedGroupId && selectedSprite ? (
+            <SpriteInfoPanel
+              key={`sprite-${selectedSprite.row}-${selectedSprite.col}`}
               sprite={selectedSprite}
               spritesheetName={activeSheet.name}
               onUpdate={handleUpdateSprite}
             />
           ) : (
             <div className="no-selection">
-              <p>Click on a sprite in the grid to edit its title and description.</p>
+              {mode === 'group' ? (
+                <p>Drag across multiple sprites to create a group, then click on a grouped cell to edit.</p>
+              ) : (
+                <p>Click on a sprite in the grid to edit its title and description.</p>
+              )}
             </div>
           )}
         </aside>

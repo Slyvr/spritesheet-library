@@ -4,12 +4,26 @@ import './SpriteSheetViewer.css'
 const SPRITE_SIZE = 32
 const SCALE_FACTORS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20]
 
+const GROUP_COLORS = [
+  'rgba(233, 69, 96, 0.35)',
+  'rgba(76, 175, 80, 0.30)',
+  'rgba(33, 150, 243, 0.30)',
+  'rgba(255, 193, 7, 0.35)',
+  'rgba(156, 39, 176, 0.30)',
+  'rgba(255, 87, 34, 0.30)',
+  'rgba(0, 188, 212, 0.30)',
+  'rgba(233, 30, 99, 0.30)',
+]
+
 export default function SpriteSheetViewer({
   spritesheetUrl,
   spriteData,
+  mode,
   selectedRow,
   selectedCol,
+  selectedGroupId,
   onSelectSprite,
+  onCreateGroup,
 }) {
   const canvasRef = useRef(null)
   const containerRef = useRef(null)
@@ -18,6 +32,11 @@ export default function SpriteSheetViewer({
   const [offset, setOffset] = useState({ x: 0, y: 0 })
   const imageRef = useRef(null)
   const [dimensions, setDimensions] = useState(null)
+
+  // Group drag state
+  const [groupDragStart, setGroupDragStart] = useState(null)
+  const [groupDragCurrent, setGroupDragCurrent] = useState(null)
+  const selectionRectRef = useRef(null)
 
   // Load the spritesheet image
   useEffect(() => {
@@ -43,13 +62,26 @@ export default function SpriteSheetViewer({
 
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.save()
-
-    // Apply pan offset
     ctx.translate(offset.x, offset.y)
 
     // Draw the spritesheet scaled
     ctx.imageSmoothingEnabled = false
     ctx.drawImage(img, 0, 0, img.width * scale, img.height * scale)
+
+    // Draw group color overlays
+    const groups = spriteData.groups || []
+    groups.forEach((group, gi) => {
+      const color = GROUP_COLORS[gi % GROUP_COLORS.length]
+      ctx.fillStyle = color
+      for (const cell of group.cells) {
+        ctx.fillRect(
+          cell.col * SPRITE_SIZE * scale,
+          cell.row * SPRITE_SIZE * scale,
+          SPRITE_SIZE * scale,
+          SPRITE_SIZE * scale
+        )
+      }
+    })
 
     // Draw grid lines
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)'
@@ -68,7 +100,7 @@ export default function SpriteSheetViewer({
     }
 
     // Highlight selected sprite
-    if (selectedRow !== null && selectedCol !== null) {
+    if (mode === 'sprite' && selectedRow !== null && selectedCol !== null) {
       ctx.strokeStyle = '#e94560'
       ctx.lineWidth = 3
       ctx.strokeRect(
@@ -77,6 +109,44 @@ export default function SpriteSheetViewer({
         SPRITE_SIZE * scale,
         SPRITE_SIZE * scale
       )
+    }
+
+    // Highlight selected group's cells with a bolder border
+    if (selectedGroupId) {
+      const selGroup = groups.find(g => g.id === selectedGroupId)
+      if (selGroup) {
+        ctx.strokeStyle = '#fff'
+        ctx.lineWidth = 2
+        for (const cell of selGroup.cells) {
+          ctx.strokeRect(
+            cell.col * SPRITE_SIZE * scale,
+            cell.row * SPRITE_SIZE * scale,
+            SPRITE_SIZE * scale,
+            SPRITE_SIZE * scale
+          )
+        }
+      }
+    }
+
+    // Draw drag selection rectangle (group mode)
+    if (groupDragStart && groupDragCurrent) {
+      const gs = groupDragStart
+      const gc = groupDragCurrent
+      const x = Math.min(gs.x, gc.x) * SPRITE_SIZE * scale + offset.x / scale * scale
+      const y = Math.min(gs.y, gc.y) * SPRITE_SIZE * scale + offset.y / scale * scale
+      // Redo properly in canvas coords
+      const rx = Math.min(gs.x, gc.x) * SPRITE_SIZE * scale
+      const ry = Math.min(gs.y, gc.y) * SPRITE_SIZE * scale
+      const rw = (Math.abs(gc.x - gs.x) + 1) * SPRITE_SIZE * scale
+      const rh = (Math.abs(gc.y - gs.y) + 1) * SPRITE_SIZE * scale
+
+      ctx.fillStyle = 'rgba(233, 69, 96, 0.15)'
+      ctx.fillRect(rx, ry, rw, rh)
+      ctx.strokeStyle = '#e94560'
+      ctx.lineWidth = 2
+      ctx.setLineDash([6, 4])
+      ctx.strokeRect(rx, ry, rw, rh)
+      ctx.setLineDash([])
     }
 
     // Draw titles for sprites that have them
@@ -95,58 +165,11 @@ export default function SpriteSheetViewer({
     }
 
     ctx.restore()
-  }, [zoom, offset, spriteData, selectedRow, selectedCol])
+  }, [zoom, offset, spriteData, selectedRow, selectedCol, selectedGroupId, mode, groupDragStart, groupDragCurrent])
 
   useEffect(() => {
     draw()
   }, [draw])
-
-  const getSpriteCoords = (clientX, clientY) => {
-    const canvas = canvasRef.current
-    if (!canvas || !imageRef.current) return null
-
-    const rect = canvas.getBoundingClientRect()
-    const scale = zoom
-    const x = (clientX - rect.left - offset.x) / scale
-    const y = (clientY - rect.top - offset.y) / scale
-
-    if (x < 0 || y < 0) return null
-
-    const col = Math.floor(x / SPRITE_SIZE)
-    const row = Math.floor(y / SPRITE_SIZE)
-
-    if (col >= spriteData.columns || row >= spriteData.rows) return null
-
-    return { row, col }
-  }
-
-  const handleClick = (e) => {
-    const coords = getSpriteCoords(e.clientX, e.clientY)
-    if (coords) {
-      onSelectSprite(coords.row, coords.col)
-    }
-  }
-
-  const handleMouseDown = (e) => {
-    // Middle mouse button for panning
-    if (e.button === 1 || e.altKey) {
-      e.preventDefault()
-      setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y })
-    }
-  }
-
-  const handleMouseMove = (e) => {
-    if (dragStart) {
-      setOffset({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
-      })
-    }
-  }
-
-  const handleMouseUp = () => {
-    setDragStart(null)
-  }
 
   // Attach wheel listener as non-passive so preventDefault works
   useEffect(() => {
@@ -167,6 +190,93 @@ export default function SpriteSheetViewer({
     return () => el.removeEventListener('wheel', handler)
   }, [zoom])
 
+  const getGridCoords = (clientX, clientY) => {
+    const canvas = canvasRef.current
+    if (!canvas || !imageRef.current) return null
+
+    const rect = canvas.getBoundingClientRect()
+    const scale = zoom
+    const x = (clientX - rect.left - offset.x) / scale
+    const y = (clientY - rect.top - offset.y) / scale
+
+    if (x < 0 || y < 0) return null
+
+    const col = Math.floor(x / SPRITE_SIZE)
+    const row = Math.floor(y / SPRITE_SIZE)
+
+    if (col >= spriteData.columns || row >= spriteData.rows) return null
+
+    return { row, col }
+  }
+
+  const handleClick = (e) => {
+    // Group mode already handles click+drag; skip simple clicks during drag
+    if (mode === 'group' && groupDragStart) return
+    const coords = getGridCoords(e.clientX, e.clientY)
+    if (coords) {
+      onSelectSprite(coords.row, coords.col)
+    }
+  }
+
+  const handleMouseDown = (e) => {
+    // Middle mouse button or alt+click for panning
+    if (e.button === 1 || e.altKey) {
+      e.preventDefault()
+      setDragStart({ x: e.clientX - offset.x, y: e.clientY - offset.y })
+      return
+    }
+
+    // Group mode: start drag selection
+    if (mode === 'group' && e.button === 0) {
+      const coords = getGridCoords(e.clientX, e.clientY)
+      if (coords) {
+        setGroupDragStart(coords)
+        setGroupDragCurrent(coords)
+      }
+    }
+  }
+
+  const handleMouseMove = (e) => {
+    if (dragStart) {
+      setOffset({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y,
+      })
+      return
+    }
+
+    if (mode === 'group' && groupDragStart) {
+      const coords = getGridCoords(e.clientX, e.clientY)
+      if (coords) {
+        setGroupDragCurrent(coords)
+      }
+    }
+  }
+
+  const handleMouseUp = () => {
+    if (groupDragStart && groupDragCurrent) {
+      const minRow = Math.min(groupDragStart.row, groupDragCurrent.row)
+      const maxRow = Math.max(groupDragStart.row, groupDragCurrent.row)
+      const minCol = Math.min(groupDragStart.col, groupDragCurrent.col)
+      const maxCol = Math.max(groupDragStart.col, groupDragCurrent.col)
+
+      const cells = []
+      for (let r = minRow; r <= maxRow; r++) {
+        for (let c = minCol; c <= maxCol; c++) {
+          cells.push({ row: r, col: c })
+        }
+      }
+
+      if (cells.length >= 2) {
+        onCreateGroup(cells)
+      }
+    }
+
+    setGroupDragStart(null)
+    setGroupDragCurrent(null)
+    setDragStart(null)
+  }
+
   return (
     <div className="spritesheet-viewer">
       <div className="viewer-toolbar">
@@ -184,6 +294,9 @@ export default function SpriteSheetViewer({
             </button>
           ))}
         </div>
+        <span className={`mode-indicator ${mode}`}>
+          {mode === 'group' ? 'Group  mode — drag to select sprites' : 'Sprite mode — click to select'}
+        </span>
         <span className="dimension-label">
           {dimensions ? `${dimensions.width}×${dimensions.height}` : ''}
         </span>
@@ -202,7 +315,12 @@ export default function SpriteSheetViewer({
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
-          style={{ cursor: dragStart ? 'grabbing' : 'crosshair' }}
+          style={{
+            cursor: dragStart ? 'grabbing'
+                 : mode === 'group' && groupDragStart ? 'crosshair'
+                 : mode === 'group' ? 'cell'
+                 : 'crosshair'
+          }}
         />
       </div>
     </div>
