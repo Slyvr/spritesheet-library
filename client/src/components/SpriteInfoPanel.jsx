@@ -1,21 +1,24 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import './SpriteInfoPanel.css'
 
 export default function SpriteInfoPanel({ sprite, group, spritesheetName, onUpdate, onUpdateGroup, onDeleteGroup }) {
-  // If a group prop is provided, render as group editor
   if (group) {
     return <GroupEditor group={group} spritesheetName={spritesheetName} onUpdateGroup={onUpdateGroup} onDeleteGroup={onDeleteGroup} />
   }
-  // Otherwise render as sprite editor
   return <SpriteEditor sprite={sprite} spritesheetName={spritesheetName} onUpdate={onUpdate} />
 }
 
 function SpriteEditor({ sprite, spritesheetName, onUpdate }) {
   const [title, setTitle] = useState(sprite.title || '')
   const [description, setDescription] = useState(sprite.description || '')
-  const titleTimer = useRef(null)
-  const descTimer = useRef(null)
   const [dirty, setDirty] = useState(false)
+  const timer = useRef(null)
+
+  // Keep refs so the timer always reads latest values
+  const titleRef = useRef(title)
+  const descRef = useRef(description)
+  titleRef.current = title
+  descRef.current = description
 
   useEffect(() => {
     setTitle(sprite.title || '')
@@ -23,35 +26,37 @@ function SpriteEditor({ sprite, spritesheetName, onUpdate }) {
     setDirty(false)
   }, [sprite.row, sprite.col, sprite.title, sprite.description])
 
-  const scheduleSave = useRef((field, val) => {
-    clearTimeout(titleTimer.current)
-    clearTimeout(descTimer.current)
-    const timer = setTimeout(() => {
-      onUpdate({
-        ...sprite,
-        row: sprite.row,
-        col: sprite.col,
-        x: sprite.col * 32,
-        y: sprite.row * 32,
-        title,
-        description,
-      })
-      setDirty(false)
-    }, 400)
-    field === 'title' ? (titleTimer.current = timer) : (descTimer.current = timer)
+  const save = useCallback(() => {
+    onUpdate({
+      ...sprite,
+      row: sprite.row,
+      col: sprite.col,
+      x: sprite.col * 32,
+      y: sprite.row * 32,
+      title: titleRef.current,
+      description: descRef.current,
+    })
+    setDirty(false)
+  }, [sprite, onUpdate])
+
+  const schedule = useCallback(() => {
+    clearTimeout(timer.current)
+    timer.current = setTimeout(save, 400)
     setDirty(true)
-  }).current
+  }, [save])
+
+  useEffect(() => {
+    return () => clearTimeout(timer.current)
+  }, [])
 
   const handleTitleChange = (e) => {
-    const val = e.target.value
-    setTitle(val)
-    scheduleSave('title', val)
+    setTitle(e.target.value)
+    schedule()
   }
 
   const handleDescChange = (e) => {
-    const val = e.target.value
-    setDescription(val)
-    scheduleSave('description', val)
+    setDescription(e.target.value)
+    schedule()
   }
 
   return (
@@ -77,9 +82,13 @@ function SpriteEditor({ sprite, spritesheetName, onUpdate }) {
 function GroupEditor({ group, spritesheetName, onUpdateGroup, onDeleteGroup }) {
   const [title, setTitle] = useState(group.title || '')
   const [description, setDescription] = useState(group.description || '')
-  const titleTimer = useRef(null)
-  const descTimer = useRef(null)
   const [dirty, setDirty] = useState(false)
+  const timer = useRef(null)
+
+  const titleRef = useRef(title)
+  const descRef = useRef(description)
+  titleRef.current = title
+  descRef.current = description
 
   useEffect(() => {
     setTitle(group.title || '')
@@ -87,31 +96,33 @@ function GroupEditor({ group, spritesheetName, onUpdateGroup, onDeleteGroup }) {
     setDirty(false)
   }, [group.id, group.title, group.description])
 
-  const scheduleSave = useRef((field, val) => {
-    clearTimeout(titleTimer.current)
-    clearTimeout(descTimer.current)
-    const timer = setTimeout(() => {
-      onUpdateGroup({
-        ...group,
-        title,
-        description,
-      })
-      setDirty(false)
-    }, 400)
-    field === 'title' ? (titleTimer.current = timer) : (descTimer.current = timer)
+  const save = useCallback(() => {
+    onUpdateGroup({
+      ...group,
+      title: titleRef.current,
+      description: descRef.current,
+    })
+    setDirty(false)
+  }, [group, onUpdateGroup])
+
+  const schedule = useCallback(() => {
+    clearTimeout(timer.current)
+    timer.current = setTimeout(save, 400)
     setDirty(true)
-  }).current
+  }, [save])
+
+  useEffect(() => {
+    return () => clearTimeout(timer.current)
+  }, [])
 
   const handleTitleChange = (e) => {
-    const val = e.target.value
-    setTitle(val)
-    scheduleSave('title', val)
+    setTitle(e.target.value)
+    schedule()
   }
 
   const handleDescChange = (e) => {
-    const val = e.target.value
-    setDescription(val)
-    scheduleSave('description', val)
+    setDescription(e.target.value)
+    schedule()
   }
 
   const handleDelete = () => {
