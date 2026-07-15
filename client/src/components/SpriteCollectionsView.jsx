@@ -112,7 +112,7 @@ function SpriteCell({ cell, spritesheetName, onToggleDot, dotState }) {
         height: CELL_SIZE,
         backgroundImage: `url(/spritesheets/${spritesheetName})`,
         backgroundPosition: `-${cell.col * CELL_SIZE}px -${cell.row * CELL_SIZE}px`,
-        backgroundSize: `${32 * CELL_SIZE / 32}px ${32 * CELL_SIZE / 32}px`,
+        backgroundSize: `${32 * CELL_SIZE}px ${32 * CELL_SIZE}px`,
         imageRendering: 'pixelated',
       }}>
         <div className="dot-overlay">
