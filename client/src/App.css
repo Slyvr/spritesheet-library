@@ -1,0 +1,92 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.app-header {
+  background: #16213e;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  border-bottom: 1px solid #0f3460;
+}
+
+.app-header h1 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #e94560;
+  white-space: nowrap;
+}
+
+.sheet-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.sheet-tab {
+  background: transparent;
+  border: 1px solid #0f3460;
+  color: #a0a0b0;
+  padding: 6px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+
+.sheet-tab:hover {
+  background: #0f3460;
+  color: #e0e0e0;
+}
+
+.sheet-tab.active {
+  background: #e94560;
+  color: #fff;
+  border-color: #e94560;
+}
+
+.app-main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.viewer-panel {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 20px;
+  background: #12122a;
+}
+
+.info-panel {
+  width: 320px;
+  border-left: 1px solid #0f3460;
+  padding: 20px;
+  overflow-y: auto;
+  background: #1a1a2e;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  font-size: 14px;
+}
+
+.no-selection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+}
