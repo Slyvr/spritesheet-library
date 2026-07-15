@@ -192,7 +192,7 @@ export default function App() {
             <SpriteCollectionsView
               spriteData={spriteData}
               spritesheetName={activeSheet.name}
-              onUpdateGroup={handleUpdateGroup}
+              onUpdateSprite={handleUpdateSprite}
             />
           ) : (
             <div className="loading">Failed to load sprite data</div>

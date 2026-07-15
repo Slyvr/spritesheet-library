@@ -2,71 +2,66 @@ import { useState, useMemo } from 'react'
 import './SpriteCollectionsView.css'
 
 const DOT_POSITIONS = ['tl', 'tc', 'tr', 'ml', 'mr', 'bl', 'bc', 'br']
-
 const DOT_LABELS = {
   tl: 'top-left', tc: 'top-center', tr: 'top-right',
   ml: 'mid-left', mr: 'mid-right',
   bl: 'bot-left', bc: 'bot-center', br: 'bot-right',
 }
 
-export default function SpriteCollectionsView({ spriteData, spritesheetName, onUpdateGroup }) {
-  const [selectedGroupId, setSelectedGroupId] = useState(null)
+export default function SpriteCollectionsView({ spriteData, spritesheetName, onUpdateSprite }) {
+  const [selectedTag, setSelectedTag] = useState(null)
 
-  const groups = useMemo(() => {
-    return [...(spriteData?.groups || [])].sort((a, b) => {
-      const ta = (a.title || '').toLowerCase()
-      const tb = (b.title || '').toLowerCase()
-      return ta.localeCompare(tb)
-    })
+  // Collect unique tags from all sprites, sorted
+  const tagMap = useMemo(() => {
+    const map = {}
+    for (const s of spriteData?.sprites || []) {
+      for (const t of s.tags || []) {
+        map[t] = (map[t] || 0) + 1
+      }
+    }
+    return Object.fromEntries(Object.entries(map).sort((a, b) => a[0].localeCompare(b[0])))
   }, [spriteData])
 
-  const selectedGroup = groups.find(g => g.id === selectedGroupId) || null
+  // Sprites that have the selected tag
+  const filteredSprites = useMemo(() => {
+    if (!selectedTag || !spriteData) return []
+    return spriteData.sprites.filter(s => (s.tags || []).includes(selectedTag))
+  }, [selectedTag, spriteData])
 
-  const handleSelectGroup = (groupId) => {
-    setSelectedGroupId(groupId === selectedGroupId ? null : groupId)
-  }
+  const tags = Object.keys(tagMap)
 
-  const toggleConstraint = (cellRow, cellCol, dotPos) => {
-    if (!selectedGroup) return
-    const cells = selectedGroup.cells.map(c => {
-      if (c.row !== cellRow || c.col !== cellCol) return c
-      const constraints = c.constraints ? [...c.constraints] : []
-      const idx = constraints.indexOf(dotPos)
-      if (idx >= 0) {
-        constraints.splice(idx, 1)
-      } else {
-        constraints.push(dotPos)
-      }
-      return { ...c, constraints: constraints.length ? constraints : undefined }
+  const toggleConstraint = (sprite, dotPos) => {
+    const constraints = sprite.constraints ? [...sprite.constraints] : []
+    const idx = constraints.indexOf(dotPos)
+    if (idx >= 0) {
+      constraints.splice(idx, 1)
+    } else {
+      constraints.push(dotPos)
+    }
+    onUpdateSprite({
+      ...sprite,
+      constraints: constraints.length ? constraints : undefined,
     })
-    onUpdateGroup({ ...selectedGroup, cells })
-  }
-
-  const hasConstraint = (cell, dotPos) => {
-    return cell.constraints?.includes(dotPos) || false
   }
 
   return (
     <div className="collections-view">
-      <div className="group-list-panel">
-        <h2 className="panel-heading">Groups</h2>
-        <div className="group-list">
-          {groups.length === 0 ? (
-            <div className="no-groups-msg">
-              No groups yet. Switch to Group mode on a spritesheet tab to create groups.
+      <div className="tag-list-panel">
+        <h2 className="panel-heading">Tags</h2>
+        <div className="tag-list">
+          {tags.length === 0 ? (
+            <div className="no-tags-msg">
+              No tags yet. Add tags to sprites in the spritesheet view.
             </div>
           ) : (
-            groups.map(g => (
+            tags.map(tag => (
               <div
-                key={g.id}
-                className={`group-list-item ${g.id === selectedGroupId ? 'selected' : ''}`}
-                onClick={() => handleSelectGroup(g.id)}
+                key={tag}
+                className={`tag-list-item ${tag === selectedTag ? 'selected' : ''}`}
+                onClick={() => setSelectedTag(tag === selectedTag ? null : tag)}
               >
-                <div className="group-item-title">{g.title || '(untitled)'}</div>
-                <div className="group-item-meta">
-                  {g.cells.length} sprite{g.cells.length !== 1 ? 's' : ''}
-                  {g.cells.some(c => c.constraints?.length) && ' · constrained'}
-                </div>
+                <div className="tag-item-title">{tag}</div>
+                <div className="tag-item-meta">{tagMap[tag]} sprite{tagMap[tag] !== 1 ? 's' : ''}</div>
               </div>
             ))
           )}
@@ -74,21 +69,21 @@ export default function SpriteCollectionsView({ spriteData, spritesheetName, onU
       </div>
 
       <div className="sprite-grid-panel">
-        {selectedGroup ? (
+        {selectedTag ? (
           <>
             <h2 className="panel-heading">
-              {selectedGroup.title || '(untitled group)'}
-              <span className="grid-subtitle">{selectedGroup.cells.length} sprites</span>
+              {selectedTag}
+              <span className="grid-subtitle">{filteredSprites.length} sprite{filteredSprites.length !== 1 ? 's' : ''}</span>
             </h2>
             <div className="sprite-grid">
-              {selectedGroup.cells.map(cell => (
+              {filteredSprites.map(sprite => (
                 <SpriteCell
-                  key={`${cell.row}-${cell.col}`}
-                  cell={cell}
+                  key={`${sprite.row}-${sprite.col}`}
+                  cell={sprite}
                   spritesheetName={spritesheetName}
-                  onToggleDot={(pos) => toggleConstraint(cell.row, cell.col, pos)}
+                  onToggleDot={(pos) => toggleConstraint(sprite, pos)}
                   dotState={DOT_POSITIONS.reduce((acc, p) => {
-                    acc[p] = hasConstraint(cell, p)
+                    acc[p] = (sprite.constraints || []).includes(p)
                     return acc
                   }, {})}
                 />
@@ -96,8 +91,8 @@ export default function SpriteCollectionsView({ spriteData, spritesheetName, onU
             </div>
           </>
         ) : (
-          <div className="no-group-selected">
-            <p>Select a group from the list to view its sprites and configure constraints.</p>
+          <div className="no-tag-selected">
+            <p>Select a tag from the list to view all sprites with that tag and configure edge constraints.</p>
           </div>
         )}
       </div>

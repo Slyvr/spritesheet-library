@@ -5,9 +5,9 @@
   overflow: hidden;
 }
 
-/* ─── Left: Group List ─── */
+/* ─── Left: Tag List ─── */
 
-.group-list-panel {
+.tag-list-panel {
   width: 280px;
   min-width: 200px;
   border-right: 1px solid #0f3460;
@@ -27,47 +27,47 @@
   gap: 8px;
 }
 
-.group-list {
+.tag-list {
   flex: 1;
   overflow-y: auto;
   padding: 4px 0;
 }
 
-.no-groups-msg {
+.no-tags-msg {
   padding: 20px 16px;
   color: #666;
   font-size: 13px;
   line-height: 1.5;
 }
 
-.group-list-item {
+.tag-list-item {
   padding: 10px 16px;
   cursor: pointer;
   border-left: 3px solid transparent;
   transition: all 0.1s;
 }
 
-.group-list-item:hover {
+.tag-list-item:hover {
   background: rgba(255, 255, 255, 0.04);
 }
 
-.group-list-item.selected {
+.tag-list-item.selected {
   background: rgba(46, 125, 78, 0.15);
   border-left-color: #2e7d4e;
 }
 
-.group-item-title {
+.tag-item-title {
   font-size: 13px;
   font-weight: 500;
   color: #e0e0e0;
   margin-bottom: 2px;
 }
 
-.group-list-item.selected .group-item-title {
+.tag-list-item.selected .tag-item-title {
   color: #6aaa7a;
 }
 
-.group-item-meta {
+.tag-item-meta {
   font-size: 11px;
   color: #666;
 }
@@ -99,7 +99,7 @@
   padding: 16px;
 }
 
-.no-group-selected {
+.no-tag-selected {
   display: flex;
   align-items: center;
   justify-content: center;
