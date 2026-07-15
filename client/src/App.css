@@ -47,6 +47,29 @@
   border-color: #e94560;
 }
 
+.collections-tab {
+  border-color: #2a5a3a;
+  color: #6aaa7a;
+}
+
+.collections-tab:hover {
+  background: #1a3a2a;
+}
+
+.collections-tab.active {
+  background: #2e7d4e;
+  color: #fff;
+  border-color: #2e7d4e;
+}
+
+.tab-divider {
+  width: 1px;
+  height: 20px;
+  background: #0f3460;
+  margin: 0 8px;
+  align-self: center;
+}
+
 .mode-toggle {
   display: flex;
   gap: 2px;
@@ -81,6 +104,42 @@
   display: flex;
   flex: 1;
   overflow: hidden;
+}
+
+.mode-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 4px;
+  background: #12122a;
+  border-left: 1px solid #0f3460;
+  align-items: center;
+}
+
+.mode-btn-sm {
+  writing-mode: vertical-lr;
+  text-orientation: mixed;
+  background: transparent;
+  border: 1px solid #0f3460;
+  color: #888;
+  padding: 8px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.12s;
+  letter-spacing: 1px;
+}
+
+.mode-btn-sm:hover {
+  color: #e0e0e0;
+  border-color: #555;
+}
+
+.mode-btn-sm.active {
+  background: #e94560;
+  color: #fff;
+  border-color: #e94560;
 }
 
 .viewer-panel {

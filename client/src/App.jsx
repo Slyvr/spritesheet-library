@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import SpriteSheetViewer from './components/SpriteSheetViewer'
 import SpriteInfoPanel from './components/SpriteInfoPanel'
+import SpriteCollectionsView from './components/SpriteCollectionsView'
 import './App.css'
 
 const SPRITESHEETS = [
@@ -18,6 +19,7 @@ export default function App() {
   const [selectedCol, setSelectedCol] = useState(null)
   const [selectedGroupId, setSelectedGroupId] = useState(null)
   const [mode, setMode] = useState('sprite') // 'sprite' | 'group'
+  const [view, setView] = useState('spritesheet') // 'spritesheet' | 'collections'
   const [loading, setLoading] = useState(true)
 
   const loadSpriteData = useCallback(async (sheet) => {
@@ -45,7 +47,6 @@ export default function App() {
 
   const handleSelectSprite = (row, col) => {
     if (mode === 'group') {
-      // In group mode, clicking selects the group containing this cell
       const group = spriteData?.groups?.find(g =>
         g.cells.some(c => c.row === row && c.col === col)
       )
@@ -92,7 +93,7 @@ export default function App() {
 
   // ── Group operations ──
 
-  const syncGroups = async (groups) => {
+  const syncGroups = useCallback(async (groups) => {
     try {
       await fetch(`/api/groups/${activeSheet.name}`, {
         method: 'PUT',
@@ -102,7 +103,7 @@ export default function App() {
     } catch (err) {
       console.error('Group save failed:', err)
     }
-  }
+  }, [activeSheet.name])
 
   const handleCreateGroup = (cells) => {
     if (!cells || cells.length < 2) return
@@ -122,7 +123,7 @@ export default function App() {
     setSelectedSprite(null)
   }
 
-  const handleUpdateGroup = async (updatedGroup) => {
+  const handleUpdateGroup = (updatedGroup) => {
     setSpriteData(prev => {
       if (!prev) return prev
       const groups = (prev.groups || []).map(g =>
@@ -148,6 +149,17 @@ export default function App() {
     ? spriteData?.groups?.find(g => g.id === selectedGroupId) || null
     : null
 
+  const switchToSpritesheet = (sheet) => {
+    setActiveSheet(sheet)
+    setView('spritesheet')
+  }
+
+  const switchToCollections = () => {
+    setSelectedGroupId(null)
+    setSelectedSprite(null)
+    setView('collections')
+  }
+
   return (
     <div className="app">
       <header className="app-header">
@@ -156,76 +168,94 @@ export default function App() {
           {SPRITESHEETS.map(sheet => (
             <button
               key={sheet.name}
-              className={`sheet-tab ${activeSheet.name === sheet.name ? 'active' : ''}`}
-              onClick={() => setActiveSheet(sheet)}
+              className={`sheet-tab ${activeSheet.name === sheet.name && view === 'spritesheet' ? 'active' : ''}`}
+              onClick={() => switchToSpritesheet(sheet)}
             >
               {sheet.label}
             </button>
           ))}
+          <div className="tab-divider" />
+          <button
+            className={`sheet-tab collections-tab ${view === 'collections' ? 'active' : ''}`}
+            onClick={switchToCollections}
+          >
+            Sprite Collections
+          </button>
         </nav>
-        <div className="mode-toggle">
-          <button
-            className={`mode-btn ${mode === 'sprite' ? 'active' : ''}`}
-            onClick={() => { setMode('sprite'); setSelectedGroupId(null) }}
-          >
-            Sprite
-          </button>
-          <button
-            className={`mode-btn ${mode === 'group' ? 'active' : ''}`}
-            onClick={() => { setMode('group'); setSelectedSprite(null) }}
-          >
-            Group
-          </button>
-        </div>
       </header>
 
-      <main className="app-main">
-        <div className="viewer-panel">
+      {view === 'collections' ? (
+        <main className="app-main">
           {loading ? (
-            <div className="loading">Loading spritesheet data...</div>
+            <div className="loading">Loading sprite data...</div>
           ) : spriteData ? (
-            <SpriteSheetViewer
-              spritesheetUrl={`/spritesheets/${activeSheet.name}`}
+            <SpriteCollectionsView
               spriteData={spriteData}
-              mode={mode}
-              selectedRow={selectedRow}
-              selectedCol={selectedCol}
-              selectedGroupId={selectedGroupId}
-              onSelectSprite={handleSelectSprite}
-              onCreateGroup={handleCreateGroup}
+              spritesheetName={activeSheet.name}
+              onUpdateGroup={handleUpdateGroup}
             />
           ) : (
             <div className="loading">Failed to load sprite data</div>
           )}
-        </div>
-
-        <aside className="info-panel">
-          {mode === 'group' && selectedGroup ? (
-            <SpriteInfoPanel
-              key={`group-${selectedGroup.id}`}
-              group={selectedGroup}
-              spritesheetName={activeSheet.name}
-              onUpdateGroup={handleUpdateGroup}
-              onDeleteGroup={handleDeleteGroup}
-            />
-          ) : !selectedGroupId && selectedSprite ? (
-            <SpriteInfoPanel
-              key={`sprite-${selectedSprite.row}-${selectedSprite.col}`}
-              sprite={selectedSprite}
-              spritesheetName={activeSheet.name}
-              onUpdate={handleUpdateSprite}
-            />
-          ) : (
-            <div className="no-selection">
-              {mode === 'group' ? (
-                <p>Drag across multiple sprites to create a group, then click on a grouped cell to edit.</p>
-              ) : (
-                <p>Click on a sprite in the grid to edit its title and description.</p>
-              )}
-            </div>
-          )}
-        </aside>
-      </main>
+        </main>
+      ) : (
+        <main className="app-main">
+          <div className="viewer-panel">
+            {loading ? (
+              <div className="loading">Loading spritesheet data...</div>
+            ) : spriteData ? (
+              <SpriteSheetViewer
+                spritesheetUrl={`/spritesheets/${activeSheet.name}`}
+                spriteData={spriteData}
+                mode={mode}
+                selectedRow={selectedRow}
+                selectedCol={selectedCol}
+                selectedGroupId={selectedGroupId}
+                onSelectSprite={handleSelectSprite}
+                onCreateGroup={handleCreateGroup}
+              />
+            ) : (
+              <div className="loading">Failed to load sprite data</div>
+            )}
+          </div>
+          <div className="mode-strip">
+            <button
+              className={`mode-btn-sm ${mode === 'sprite' ? 'active' : ''}`}
+              onClick={() => { setMode('sprite'); setSelectedGroupId(null) }}
+            >Sprite</button>
+            <button
+              className={`mode-btn-sm ${mode === 'group' ? 'active' : ''}`}
+              onClick={() => { setMode('group'); setSelectedSprite(null) }}
+            >Group</button>
+          </div>
+          <aside className="info-panel">
+            {mode === 'group' && selectedGroup ? (
+              <SpriteInfoPanel
+                key={`group-${selectedGroup.id}`}
+                group={selectedGroup}
+                spritesheetName={activeSheet.name}
+                onUpdateGroup={handleUpdateGroup}
+                onDeleteGroup={handleDeleteGroup}
+              />
+            ) : !selectedGroupId && selectedSprite ? (
+              <SpriteInfoPanel
+                key={`sprite-${selectedSprite.row}-${selectedSprite.col}`}
+                sprite={selectedSprite}
+                spritesheetName={activeSheet.name}
+                onUpdate={handleUpdateSprite}
+              />
+            ) : (
+              <div className="no-selection">
+                {mode === 'group' ? (
+                  <p>Drag across multiple sprites to create a group, then click on a grouped cell to edit.</p>
+                ) : (
+                  <p>Click on a sprite in the grid to edit its title and description.</p>
+                )}
+              </div>
+            )}
+          </aside>
+        </main>
+      )}
     </div>
   )
 }
