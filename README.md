@@ -10,11 +10,9 @@ A web-based tool for extracting, annotating, and organizing individual sprites f
 # Start the backend
 cd server && node index.js
 
-# Backend runs on :3011, frontend served via NGINX on :3005
+# Frontend is served via NGINX, backend API runs on port 3011
 # Open http://localhost:3005
 ```
-
-**Public access:** `https://spritesheetlibrary.mushroomhollow.dev` (via Cloudflare tunnel)
 
 ---
 
