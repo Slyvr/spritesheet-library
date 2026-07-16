@@ -73,8 +73,11 @@ app.get('/api/sprite-data/:sheetName', (req, res) => {
     }
 
     const data = db.loadSpriteDataSafe(ip, sheetName);
+    console.log(`[sprite-data] ip=${ip} sheet=${sheetName} groups=${data.groups?.length} cats=${JSON.stringify(data.terrainCategories)} cols=${JSON.stringify(data.collectionNames)}`);
     const body = JSON.stringify(data);
-    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+    res.set('CDN-Cache-Control', 'no-cache');
+    res.set('Cloudflare-CDN-Cache-Control', 'no-cache');
     res.set('Content-Type', 'application/json');
     res.end(body);
   } catch (err) {
