@@ -19,11 +19,16 @@ app.use((req, _res, next) => {
   next();
 });
 
+// ── Upload limits ──
+const MAX_FILE_SIZE = 2 * 1024 * 1024;      // 2 MB per file
+const MAX_SHEETS_PER_IP = 10;                // 10 sheets per IP
+const MAX_STORAGE_PER_IP = 10 * 1024 * 1024; // 10 MB total per IP
+
 // ── Multer setup for spritesheet uploads ──
 
 const upload = multer({
   dest: path.join(__dirname, '..', 'uploads'),
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+  limits: { fileSize: MAX_FILE_SIZE },
 });
 
 // Ensure upload directory exists
@@ -143,10 +148,21 @@ app.get('/api/spritesheets', (req, res) => {
 // ── Upload ──
 
 // POST /api/upload - Upload spritesheet PNG + optional JSON (stored per-IP)
-app.post('/api/upload', upload.fields([
-  { name: 'png', maxCount: 1 },
-  { name: 'json', maxCount: 1 },
-]), (req, res) => {
+app.post('/api/upload', (req, res, next) => {
+  upload.fields([
+    { name: 'png', maxCount: 1 },
+    { name: 'json', maxCount: 1 },
+  ])(req, res, (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ error: 'File exceeds the 2 MB size limit.' });
+      }
+      console.error('Multer error:', err);
+      return res.status(400).json({ error: 'Upload failed: ' + err.message });
+    }
+    next();
+  });
+}, (req, res) => {
   try {
     const ip = req.clientIp;
     const pngFile = req.files?.png?.[0];
@@ -162,8 +178,25 @@ app.post('/api/upload', upload.fields([
       return res.status(400).json({ error: 'PNG file must have a .png extension' });
     }
 
-    const baseName = pngFile.originalname.replace(/\.png$/i, '').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const baseName = pngFile.originalname.replace(/\\.png$/i, '').replace(/[^a-zA-Z0-9_-]/g, '_');
     const sheetName = `${baseName}.png`;
+
+    // Check per-IP limits before storing
+    const sheetCount = db.getUploadCount(ip);
+    if (sheetCount >= MAX_SHEETS_PER_IP) {
+      fs.unlinkSync(pngFile.path);
+      if (jsonFile) fs.unlinkSync(jsonFile.path);
+      return res.status(429).json({ error: `Limit of ${MAX_SHEETS_PER_IP} spritesheets per IP reached. Delete a sheet before uploading a new one.` });
+    }
+
+    const currentStorage = db.getTotalStorageBytes(ip);
+    const pngSize = pngFile.size;
+    if (currentStorage + pngSize > MAX_STORAGE_PER_IP) {
+      fs.unlinkSync(pngFile.path);
+      if (jsonFile) fs.unlinkSync(jsonFile.path);
+      const remainingMb = ((MAX_STORAGE_PER_IP - currentStorage) / (1024 * 1024)).toFixed(1);
+      return res.status(429).json({ error: `Storage limit of 10 MB reached. Only ${remainingMb} MB remaining for this IP.` });
+    }
 
     // Read PNG into buffer and store in SQLite
     const pngBuffer = fs.readFileSync(pngFile.path);

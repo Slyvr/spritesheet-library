@@ -183,6 +183,18 @@ function storeUploadedPng(ip, sheetName, pngBuffer, originalName) {
   ).run(ip, sheetName, pngBuffer, originalName || sheetName);
 }
 
+function getUploadCount(ip) {
+  const d = getDb();
+  const row = d.prepare('SELECT COUNT(*) as cnt FROM uploaded_pngs WHERE ip = ?').get(ip);
+  return row ? row.cnt : 0;
+}
+
+function getTotalStorageBytes(ip) {
+  const d = getDb();
+  const row = d.prepare('SELECT COALESCE(SUM(LENGTH(png)), 0) as total FROM uploaded_pngs WHERE ip = ?').get(ip);
+  return row ? row.total : 0;
+}
+
 function getUploadedPng(ip, sheetName) {
   const d = getDb();
   const row = d.prepare(
@@ -201,4 +213,6 @@ module.exports = {
   listSpritesheets,
   storeUploadedPng,
   getUploadedPng,
+  getUploadCount,
+  getTotalStorageBytes,
 };
