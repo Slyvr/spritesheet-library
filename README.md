@@ -1,4 +1,4 @@
-# Sprite Sheet Tool
+# Spritesheet Library
 
 A web-based tool for extracting, annotating, and mapping individual sprites from sprite sheet images. Works with 32×32 pixel sprites on 1024×1024 sprite sheets (32×32 grid — 1024 sprites per sheet).
 

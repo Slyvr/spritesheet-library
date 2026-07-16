@@ -163,7 +163,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Sprite Sheet Tool</h1>
+        <h1>Spritesheet Library</h1>
         <nav className="sheet-tabs">
           {SPRITESHEETS.map(sheet => (
             <button
