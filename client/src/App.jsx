@@ -321,6 +321,17 @@ export default function App() {
           {sheetsList.map(sheet => {
             return (
             <div key={sheet.name} className="sidebar-sheet-row">
+              {sidebarOpen && (
+                <button
+                  className="sidebar-del-btn"
+                  onClick={(e) => handleDeleteSheet(sheet, e)}
+                  title="Delete spritesheet"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#e94560" strokeWidth="2" strokeLinecap="round">
+                    <path d="M1 1l10 10M11 1l-10 10" />
+                  </svg>
+                </button>
+              )}
               <button
                 className={`sidebar-btn ${activeSheet?.name === sheet.name ? 'active' : ''}`}
                 onClick={() => switchToSpritesheet(sheet)}
@@ -336,15 +347,6 @@ export default function App() {
               </button>
               {sidebarOpen && (
                 <div className="sidebar-dl-group">
-                  <button
-                    className="sidebar-dl-btn sidebar-delete-btn"
-                    onClick={(e) => handleDeleteSheet(sheet, e)}
-                    title="Delete spritesheet"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#e94560" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M2 2l10 10M12 2l-10 10" />
-                    </svg>
-                  </button>
                   <a
                     className="sidebar-dl-btn"
                     href={`/api/download/png/${sheet.name}`}

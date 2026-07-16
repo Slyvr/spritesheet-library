@@ -197,7 +197,7 @@ app.post('/api/upload', (req, res, next) => {
       return res.status(400).json({ error: 'PNG file must have a .png extension' });
     }
 
-    const baseName = pngFile.originalname.replace(/\\.png$/i, '').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const baseName = pngFile.originalname.replace(/\.png$/i, '').replace(/[^a-zA-Z0-9_-]/g, '_');
     const sheetName = `${baseName}.png`;
 
     // Check per-IP limits before storing
