@@ -141,6 +141,17 @@
   cursor: not-allowed;
 }
 
+.sidebar-dlall-btn {
+  margin-top: 2px;
+  color: #6aaa7a;
+  text-decoration: none;
+}
+
+.sidebar-dlall-btn:hover {
+  background: #0f3460;
+  color: #8fcf9f;
+}
+
 .sidebar-btn svg {
   flex-shrink: 0;
 }

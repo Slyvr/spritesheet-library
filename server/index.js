@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const archiver = require('archiver');
 
 const app = express();
 const PORT = 3011;
@@ -354,6 +355,41 @@ app.get('/api/download/json/:sheetName', (req, res) => {
     console.error('Error downloading sprite data:', err);
     res.status(500).json({ error: 'Download failed' });
   }
+});
+
+// GET /api/download/all - Download all spritesheets + JSON data as a zip
+app.get('/api/download/all', (req, res) => {
+  const sheets = listSpritesheets();
+  if (sheets.length === 0) {
+    return res.status(404).json({ error: 'No spritesheets available' });
+  }
+
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Disposition', 'attachment; filename="spritesheets.zip"');
+
+  const archive = archiver('zip', { zlib: { level: 6 } });
+
+  archive.on('error', (err) => {
+    console.error('Archive error:', err);
+    res.status(500).json({ error: 'Failed to create archive' });
+  });
+
+  archive.pipe(res);
+
+  for (const sheet of sheets) {
+    const pngPath = path.join(SPRITESHEETS_DIR, sheet.name);
+    if (fs.existsSync(pngPath)) {
+      archive.file(pngPath, { name: `spritesheets/${sheet.name}` });
+    }
+
+    const jsonName = sheet.name.replace(/\.png$/i, '') + '.json';
+    const jsonPath = path.join(DATA_DIR, jsonName);
+    if (fs.existsSync(jsonPath)) {
+      archive.file(jsonPath, { name: `data/${jsonName}` });
+    }
+  }
+
+  archive.finalize();
 });
 
 // Serve static spritesheets
