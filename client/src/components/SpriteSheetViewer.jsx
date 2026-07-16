@@ -165,7 +165,7 @@ export default function SpriteSheetViewer({
     }
 
     ctx.restore()
-  }, [zoom, offset, spriteData, selectedRow, selectedCol, selectedGroupId, mode, groupDragStart, groupDragCurrent])
+  }, [zoom, offset, spriteData, selectedRow, selectedCol, selectedGroupId, mode, groupDragStart, groupDragCurrent, dimensions])
 
   useEffect(() => {
     draw()
