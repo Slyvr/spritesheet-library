@@ -134,6 +134,25 @@ app.delete('/api/groups/:sheetName/:groupId', (req, res) => {
 
 // ── Spritesheets listing ──
 
+// DELETE /api/spritesheets/:sheetName - Delete a spritesheet and its data
+app.delete('/api/spritesheets/:sheetName', (req, res) => {
+  try {
+    const { sheetName } = req.params;
+    const ip = req.clientIp;
+
+    const png = db.getUploadedPng(ip, sheetName);
+    if (!png) {
+      return res.status(404).json({ error: 'Spritesheet not found' });
+    }
+
+    db.deleteSheet(ip, sheetName);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error deleting spritesheet:', err);
+    res.status(500).json({ error: 'Failed to delete spritesheet' });
+  }
+});
+
 // GET /api/spritesheets - List spritesheets visible to this IP
 app.get('/api/spritesheets', (req, res) => {
   try {

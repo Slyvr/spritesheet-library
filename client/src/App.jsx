@@ -248,6 +248,28 @@ export default function App() {
     setView('settings')
   }
 
+  const handleDeleteSheet = async (sheet, e) => {
+    e.stopPropagation()
+    if (!window.confirm(`Delete "${sheet.label}"? This cannot be undone.`)) return
+    try {
+      const res = await fetch(`/api/spritesheets/${sheet.name}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const err = await res.json()
+        alert(err.error || 'Delete failed')
+        return
+      }
+      const list = await (await fetch('/api/spritesheets')).json()
+      setSheetsList(list)
+      if (activeSheet?.name === sheet.name) {
+        setActiveSheet(list.length > 0 ? list[0] : null)
+        setSpriteData(null)
+      }
+    } catch (err) {
+      console.error('Delete error:', err)
+      alert('Failed to delete spritesheet')
+    }
+  }
+
   return (
     <div className="app">
       <header className="app-header">
@@ -314,6 +336,15 @@ export default function App() {
               </button>
               {sidebarOpen && (
                 <div className="sidebar-dl-group">
+                  <button
+                    className="sidebar-dl-btn sidebar-delete-btn"
+                    onClick={(e) => handleDeleteSheet(sheet, e)}
+                    title="Delete spritesheet"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#e94560" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M2 2l10 10M12 2l-10 10" />
+                    </svg>
+                  </button>
                   <a
                     className="sidebar-dl-btn"
                     href={`/api/download/png/${sheet.name}`}

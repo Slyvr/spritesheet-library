@@ -203,6 +203,12 @@ function getUploadedPng(ip, sheetName) {
   return row ? Buffer.from(row.png) : null;
 }
 
+function deleteSheet(ip, sheetName) {
+  const d = getDb();
+  d.prepare('DELETE FROM uploaded_pngs WHERE ip = ? AND sheet_name = ?').run(ip, sheetName);
+  d.prepare('DELETE FROM sprite_data WHERE ip = ? AND sheet_name = ?').run(ip, sheetName);
+}
+
 module.exports = {
   initDb,
   migrateExistingData,
@@ -215,4 +221,5 @@ module.exports = {
   getUploadedPng,
   getUploadCount,
   getTotalStorageBytes,
+  deleteSheet,
 };
