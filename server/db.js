@@ -188,7 +188,7 @@ function getUploadedPng(ip, sheetName) {
   const row = d.prepare(
     'SELECT png FROM uploaded_pngs WHERE ip = ? AND sheet_name = ?'
   ).get(ip, sheetName);
-  return row ? row.png : null;
+  return row ? Buffer.from(row.png) : null;
 }
 
 module.exports = {
