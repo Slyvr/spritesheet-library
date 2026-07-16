@@ -297,7 +297,7 @@ export default function App() {
             return (
             <div key={sheet.name} className="sidebar-sheet-row">
               <button
-                className={`sidebar-btn ${activeSheet.name === sheet.name ? 'active' : ''}`}
+                className={`sidebar-btn ${activeSheet?.name === sheet.name ? 'active' : ''}`}
                 onClick={() => switchToSpritesheet(sheet)}
                 title={sidebarOpen ? '' : sheet.label}
               >
@@ -360,7 +360,10 @@ export default function App() {
         </div>
 
         <main className="app-main">
-          <div className="view-mode-tabs">
+          {!activeSheet ? (
+            <div className="loading">Loading spritesheets...</div>
+          ) : (
+          <><div className="view-mode-tabs">
             <button
               className={`view-tab ${mode === 'sprite' && view === 'spritesheet' ? 'active' : ''}`}
               onClick={() => { setMode('sprite'); setSelectedGroupId(null); setView('spritesheet') }}
@@ -477,6 +480,8 @@ export default function App() {
               )}
             </aside>
             </div>
+          )}
+          </>
           )}
         </main>
       </div>
