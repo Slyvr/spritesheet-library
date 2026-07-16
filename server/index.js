@@ -9,7 +9,7 @@ const app = express();
 const PORT = 3011;
 
 // ── Trust proxy so req.ip reads the real client IP from X-Forwarded-For ──
-app.set('trust proxy', 1);
+app.set('trust proxy', true);
 
 app.use(express.json());
 
