@@ -68,20 +68,22 @@ export default function SpriteSheetViewer({
     ctx.imageSmoothingEnabled = false
     ctx.drawImage(img, 0, 0, img.width * scale, img.height * scale)
 
-    // Draw group color overlays
-    const groups = spriteData.groups || []
-    groups.forEach((group, gi) => {
-      const color = GROUP_COLORS[gi % GROUP_COLORS.length]
-      ctx.fillStyle = color
-      for (const cell of group.cells) {
-        ctx.fillRect(
-          cell.col * SPRITE_SIZE * scale,
-          cell.row * SPRITE_SIZE * scale,
-          SPRITE_SIZE * scale,
-          SPRITE_SIZE * scale
-        )
-      }
-    })
+    // Draw group color overlays (hide in sprite mode)
+    if (mode !== 'sprite') {
+      const groups = spriteData.groups || []
+      groups.forEach((group, gi) => {
+        const color = GROUP_COLORS[gi % GROUP_COLORS.length]
+        ctx.fillStyle = color
+        for (const cell of group.cells) {
+          ctx.fillRect(
+            cell.col * SPRITE_SIZE * scale,
+            cell.row * SPRITE_SIZE * scale,
+            SPRITE_SIZE * scale,
+            SPRITE_SIZE * scale
+          )
+        }
+      })
+    }
 
     // Draw grid lines
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)'
