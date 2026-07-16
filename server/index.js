@@ -157,6 +157,46 @@ app.delete('/api/groups/:sheetName/:groupId', (req, res) => {
   }
 });
 
+// ── Settings ──
+
+const SETTINGS_PATH = path.join(DATA_DIR, 'settings.json');
+
+function loadSettings() {
+  if (fs.existsSync(SETTINGS_PATH)) {
+    return JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf-8'));
+  }
+  const defaults = { terrainCategories: [], collectionNames: [] };
+  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(defaults, null, 2), 'utf-8');
+  return defaults;
+}
+
+function saveSettings(settings) {
+  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2), 'utf-8');
+}
+
+app.get('/api/settings', (req, res) => {
+  try {
+    res.json(loadSettings());
+  } catch (err) {
+    console.error('Error loading settings:', err);
+    res.status(500).json({ error: 'Failed to load settings' });
+  }
+});
+
+app.put('/api/settings', (req, res) => {
+  try {
+    const settings = req.body;
+    if (!settings || typeof settings !== 'object') {
+      return res.status(400).json({ error: 'Invalid settings object' });
+    }
+    saveSettings(settings);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error saving settings:', err);
+    res.status(500).json({ error: 'Failed to save settings' });
+  }
+});
+
 // Serve static spritesheets
 app.use('/spritesheets', express.static(SPRITESHEETS_DIR));
 

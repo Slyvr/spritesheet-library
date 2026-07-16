@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import SpriteSheetViewer from './components/SpriteSheetViewer'
 import SpriteInfoPanel from './components/SpriteInfoPanel'
 import SpriteCollectionsView from './components/SpriteCollectionsView'
+import SettingsPanel from './components/SettingsPanel'
 import './App.css'
 
 const SPRITESHEETS = [
@@ -21,6 +22,9 @@ export default function App() {
   const [mode, setMode] = useState('sprite') // 'sprite' | 'group'
   const [view, setView] = useState('spritesheet') // 'spritesheet' | 'collections'
   const [loading, setLoading] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settings, setSettings] = useState({ terrainCategories: [], collectionNames: [] })
 
   const loadSpriteData = useCallback(async (sheet) => {
     setLoading(true)
@@ -44,6 +48,18 @@ export default function App() {
   useEffect(() => {
     loadSpriteData(activeSheet)
   }, [activeSheet, loadSpriteData])
+
+  // Load settings
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(data => {
+        if (data.terrainCategories || data.collectionNames) {
+          setSettings(data)
+        }
+      })
+      .catch(err => console.error('Error loading settings:', err))
+  }, [])
 
   const handleSelectSprite = (row, col) => {
     if (mode === 'group') {
@@ -145,6 +161,19 @@ export default function App() {
     setSelectedSprite(null)
   }
 
+  const handleSaveSettings = async (next) => {
+    setSettings(next)
+    try {
+      await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(next),
+      })
+    } catch (err) {
+      console.error('Settings save failed:', err)
+    }
+  }
+
   const selectedGroup = selectedGroupId
     ? spriteData?.groups?.find(g => g.id === selectedGroupId) || null
     : null
@@ -163,6 +192,9 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
+        <button className="hamburger-btn" onClick={() => setSidebarOpen(o => !o)}>
+          <span /><span /><span />
+        </button>
         <h1>Spritesheet Library</h1>
         <nav className="sheet-tabs">
           {SPRITESHEETS.map(sheet => (
@@ -183,6 +215,20 @@ export default function App() {
           </button>
         </nav>
       </header>
+
+      <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-content">
+          <button className="sidebar-btn" onClick={() => { setSettingsOpen(true); setSidebarOpen(false) }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <circle cx="8" cy="8" r="3" />
+              <path d="M8 1v2M8 13v2M1 8h2M13 8h2M2.5 2.5l1.5 1.5M12 12l1.5 1.5M2.5 13.5l1.5-1.5M12 4l1.5-1.5" />
+            </svg>
+            Settings
+          </button>
+        </div>
+      </div>
+
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
 
       {view === 'collections' ? (
         <main className="app-main">
@@ -255,6 +301,14 @@ export default function App() {
             )}
           </aside>
         </main>
+      )}
+
+      {settingsOpen && (
+        <SettingsPanel
+          settings={settings}
+          onSave={handleSaveSettings}
+          onClose={() => setSettingsOpen(false)}
+        />
       )}
     </div>
   )
