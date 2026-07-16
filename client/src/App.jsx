@@ -22,7 +22,7 @@ export default function App() {
   const [mode, setMode] = useState('sprite') // 'sprite' | 'group'
   const [view, setView] = useState('spritesheet') // 'spritesheet' | 'collections'
   const [loading, setLoading] = useState(true)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settings, setSettings] = useState({ terrainCategories: [], collectionNames: [] })
 
@@ -192,121 +192,136 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <button className="hamburger-btn" onClick={() => setSidebarOpen(o => !o)}>
+        <button className="hamburger-btn" onClick={() => setSidebarOpen(o => !o)} title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}>
           <span /><span /><span />
         </button>
         <h1>Spritesheet Library</h1>
-        <nav className="sheet-tabs">
+      </header>
+
+      <div className="app-body">
+        <div className={`sidebar ${sidebarOpen ? '' : 'collapsed'}`}>
+          <div className="sidebar-section-label">{sidebarOpen && 'Sheets'}</div>
           {SPRITESHEETS.map(sheet => (
             <button
               key={sheet.name}
-              className={`sheet-tab ${activeSheet.name === sheet.name && view === 'spritesheet' ? 'active' : ''}`}
+              className={`sidebar-btn ${activeSheet.name === sheet.name && view === 'spritesheet' ? 'active' : ''}`}
               onClick={() => switchToSpritesheet(sheet)}
+              title={sidebarOpen ? '' : sheet.label}
             >
-              {sheet.label}
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="6" height="6" />
+                <rect x="10" y="2" width="6" height="6" />
+                <rect x="2" y="10" width="6" height="6" />
+                <rect x="10" y="10" width="6" height="6" />
+              </svg>
+              {sidebarOpen && <span>{sheet.label}</span>}
             </button>
           ))}
-          <div className="tab-divider" />
           <button
-            className={`sheet-tab collections-tab ${view === 'collections' ? 'active' : ''}`}
+            className={`sidebar-btn collections-btn ${view === 'collections' ? 'active' : ''}`}
             onClick={switchToCollections}
+            title={sidebarOpen ? '' : 'Terrain Collections'}
           >
-            Terrain Collections
-          </button>
-        </nav>
-      </header>
-
-      <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-        <div className="sidebar-content">
-          <button className="sidebar-btn" onClick={() => { setSettingsOpen(true); setSidebarOpen(false) }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-              <circle cx="8" cy="8" r="3" />
-              <path d="M8 1v2M8 13v2M1 8h2M13 8h2M2.5 2.5l1.5 1.5M12 12l1.5 1.5M2.5 13.5l1.5-1.5M12 4l1.5-1.5" />
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 4h5l2 2h7v8H2V4z" />
             </svg>
-            Settings
+            {sidebarOpen && <span>Terrain Collections</span>}
+          </button>
+
+          <div className="sidebar-spacer" />
+
+          <div className="sidebar-section-label">{sidebarOpen && 'Tools'}</div>
+          <button
+            className="sidebar-btn"
+            onClick={() => setSettingsOpen(true)}
+            title={sidebarOpen ? '' : 'Settings'}
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <circle cx="9" cy="9" r="3" />
+              <path d="M9 2v2M9 14v2M2 9h2M14 9h2M3.5 3.5l1.5 1.5M13 13l1.5 1.5M3.5 14.5l1.5-1.5M13 5l1.5-1.5" />
+            </svg>
+            {sidebarOpen && <span>Settings</span>}
           </button>
         </div>
-      </div>
 
-      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
-
-      {view === 'collections' ? (
-        <main className="app-main">
-          {loading ? (
-            <div className="loading">Loading sprite data...</div>
-          ) : spriteData ? (
-            <SpriteCollectionsView
-              spriteData={spriteData}
-              spritesheetName={activeSheet.name}
-              terrainCategories={settings.terrainCategories}
-              onUpdateSprite={handleUpdateSprite}
-            />
-          ) : (
-            <div className="loading">Failed to load sprite data</div>
-          )}
-        </main>
-      ) : (
-        <main className="app-main">
-          <div className="viewer-panel">
+        {view === 'collections' ? (
+          <main className="app-main">
             {loading ? (
-              <div className="loading">Loading spritesheet data...</div>
+              <div className="loading">Loading sprite data...</div>
             ) : spriteData ? (
-              <SpriteSheetViewer
-                spritesheetUrl={`/spritesheets/${activeSheet.name}`}
+              <SpriteCollectionsView
                 spriteData={spriteData}
-                mode={mode}
-                selectedRow={selectedRow}
-                selectedCol={selectedCol}
-                selectedGroupId={selectedGroupId}
-                onSelectSprite={handleSelectSprite}
-                onCreateGroup={handleCreateGroup}
+                spritesheetName={activeSheet.name}
+                terrainCategories={settings.terrainCategories}
+                onUpdateSprite={handleUpdateSprite}
               />
             ) : (
               <div className="loading">Failed to load sprite data</div>
             )}
-          </div>
-          <div className="mode-strip">
-            <button
-              className={`mode-btn-sm ${mode === 'sprite' ? 'active' : ''}`}
-              onClick={() => { setMode('sprite'); setSelectedGroupId(null) }}
-            >Sprite</button>
-            <button
-              className={`mode-btn-sm ${mode === 'group' ? 'active' : ''}`}
-              onClick={() => { setMode('group'); setSelectedSprite(null) }}
-            >Group</button>
-          </div>
-          <aside className="info-panel">
-            {mode === 'group' && selectedGroup ? (
-              <SpriteInfoPanel
-                key={`group-${selectedGroup.id}`}
-                group={selectedGroup}
-                spritesheetName={activeSheet.name}
-                terrainCategories={settings.terrainCategories}
-                collectionNames={settings.collectionNames}
-                onUpdateGroup={handleUpdateGroup}
-                onDeleteGroup={handleDeleteGroup}
-              />
-            ) : !selectedGroupId && selectedSprite ? (
-              <SpriteInfoPanel
-                key={`sprite-${selectedSprite.row}-${selectedSprite.col}`}
-                sprite={selectedSprite}
-                spritesheetName={activeSheet.name}
-                terrainCategories={settings.terrainCategories}
-                collectionNames={settings.collectionNames}
-                onUpdate={handleUpdateSprite}
-              />
-            ) : (
-              <div className="no-selection">
-                {mode === 'group' ? (
-                  <p>Drag across multiple sprites to create a group, then click on a grouped cell to edit.</p>
-                ) : (
-                  <p>Click on a sprite in the grid to edit its title and description.</p>
-                )}
-              </div>
-            )}
-          </aside>
-        </main>
-      )}
+          </main>
+        ) : (
+          <main className="app-main">
+            <div className="viewer-panel">
+              {loading ? (
+                <div className="loading">Loading spritesheet data...</div>
+              ) : spriteData ? (
+                <SpriteSheetViewer
+                  spritesheetUrl={`/spritesheets/${activeSheet.name}`}
+                  spriteData={spriteData}
+                  mode={mode}
+                  selectedRow={selectedRow}
+                  selectedCol={selectedCol}
+                  selectedGroupId={selectedGroupId}
+                  onSelectSprite={handleSelectSprite}
+                  onCreateGroup={handleCreateGroup}
+                />
+              ) : (
+                <div className="loading">Failed to load sprite data</div>
+              )}
+            </div>
+            <div className="mode-strip">
+              <button
+                className={`mode-btn-sm ${mode === 'sprite' ? 'active' : ''}`}
+                onClick={() => { setMode('sprite'); setSelectedGroupId(null) }}
+              >Sprite</button>
+              <button
+                className={`mode-btn-sm ${mode === 'group' ? 'active' : ''}`}
+                onClick={() => { setMode('group'); setSelectedSprite(null) }}
+              >Group</button>
+            </div>
+            <aside className="info-panel">
+              {mode === 'group' && selectedGroup ? (
+                <SpriteInfoPanel
+                  key={`group-${selectedGroup.id}`}
+                  group={selectedGroup}
+                  spritesheetName={activeSheet.name}
+                  terrainCategories={settings.terrainCategories}
+                  collectionNames={settings.collectionNames}
+                  onUpdateGroup={handleUpdateGroup}
+                  onDeleteGroup={handleDeleteGroup}
+                />
+              ) : !selectedGroupId && selectedSprite ? (
+                <SpriteInfoPanel
+                  key={`sprite-${selectedSprite.row}-${selectedSprite.col}`}
+                  sprite={selectedSprite}
+                  spritesheetName={activeSheet.name}
+                  terrainCategories={settings.terrainCategories}
+                  collectionNames={settings.collectionNames}
+                  onUpdate={handleUpdateSprite}
+                />
+              ) : (
+                <div className="no-selection">
+                  {mode === 'group' ? (
+                    <p>Drag across multiple sprites to create a group, then click on a grouped cell to edit.</p>
+                  ) : (
+                    <p>Click on a sprite in the grid to edit its title and description.</p>
+                  )}
+                </div>
+              )}
+            </aside>
+          </main>
+        )}
+      </div>
 
       {settingsOpen && (
         <SettingsPanel
