@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Circular badge background -->
+  <circle cx="16" cy="16" r="15" fill="#fbfedf" stroke="#066176" stroke-width="1.2"/>
+  <!-- Sky through the circle -->
+  <rect x="1" y="1" width="30" height="18" rx="8" fill="#099396" opacity="0.15"/>
+  <!-- Mushroom cap (roof) - styled like the logo's giant red mushroom -->
+  <path d="M6 17 Q6 4 16 4 Q26 4 26 17" fill="#e04237"/>
+  <!-- Mushroom cap highlight (slight gradient feel) -->
+  <path d="M14 5 Q16 4 16 4 Q16 4 18 5 Q16 8 14 5" fill="#f3702a" opacity="0.4"/>
+  <!-- White spots on mushroom cap -->
+  <circle cx="11.5" cy="9" r="2.2" fill="#fbfedf"/>
+  <circle cx="20.5" cy="10" r="1.8" fill="#fbfedf"/>
+  <circle cx="16" cy="7.5" r="1.6" fill="#fbfedf"/>
+  <circle cx="16.5" cy="12" r="1.2" fill="#fbfedf"/>
+  <circle cx="9" cy="13.5" r="1" fill="#fbfedf"/>
+  <circle cx="23" cy="14" r="1.3" fill="#fbfedf"/>
+  <!-- Green hill / earth beneath -->
+  <path d="M5 17 Q16 14 27 17 L27 27 Q16 30 5 27 Z" fill="#93d2bd"/>
+  <!-- Hill shading -->
+  <path d="M8 19 Q16 16 24 19 Q16 21 8 19" fill="#066176" opacity="0.08"/>
+  <!-- Round door -->
+  <circle cx="16" cy="23" r="3" fill="#066176"/>
+  <!-- Door frame highlight -->
+  <circle cx="16" cy="23" r="3" fill="none" stroke="#ead4ab" stroke-width="0.5"/>
+  <!-- Door knob -->
+  <circle cx="17.5" cy="23.5" r="0.6" fill="#ead4ab"/>
+  <!-- Left window -->
+  <circle cx="10.5" cy="20" r="1.6" fill="#099396"/>
+  <circle cx="10.5" cy="20" r="1.6" fill="none" stroke="#ead4ab" stroke-width="0.5"/>
+  <!-- Right window -->
+  <circle cx="21.5" cy="20" r="1.6" fill="#099396"/>
+  <circle cx="21.5" cy="20" r="1.6" fill="none" stroke="#ead4ab" stroke-width="0.5"/>
+  <!-- Small foreground mushrooms -->
+  <rect x="8" y="25.5" width="1.2" height="2" rx="0.4" fill="#ead4ab"/>
+  <ellipse cx="8.6" cy="25" rx="1.4" ry="1" fill="#e04237"/>
+  <circle cx="8" cy="24.5" r="0.4" fill="#fbfedf"/>
+  <rect x="22.5" y="26" width="1" height="1.5" rx="0.3" fill="#ead4ab"/>
+  <ellipse cx="23" cy="25.5" rx="1.2" ry="0.8" fill="#e04237"/>
+</svg>
