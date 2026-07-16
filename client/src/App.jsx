@@ -281,6 +281,7 @@ export default function App() {
                 group={selectedGroup}
                 spritesheetName={activeSheet.name}
                 terrainCategories={settings.terrainCategories}
+                collectionNames={settings.collectionNames}
                 onUpdateGroup={handleUpdateGroup}
                 onDeleteGroup={handleDeleteGroup}
               />
@@ -290,6 +291,7 @@ export default function App() {
                 sprite={selectedSprite}
                 spritesheetName={activeSheet.name}
                 terrainCategories={settings.terrainCategories}
+                collectionNames={settings.collectionNames}
                 onUpdate={handleUpdateSprite}
               />
             ) : (
