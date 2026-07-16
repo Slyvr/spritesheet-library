@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import SpriteSheetViewer from './components/SpriteSheetViewer'
 import SpriteInfoPanel from './components/SpriteInfoPanel'
 import SpriteCollectionsView from './components/SpriteCollectionsView'
+import CollectionView from './components/CollectionView'
 import SettingsPanel from './components/SettingsPanel'
 import './App.css'
 
@@ -20,11 +21,12 @@ export default function App() {
   const [selectedCol, setSelectedCol] = useState(null)
   const [selectedGroupId, setSelectedGroupId] = useState(null)
   const [mode, setMode] = useState('sprite') // 'sprite' | 'group'
-  const [view, setView] = useState('spritesheet') // 'spritesheet' | 'collections'
+  const [view, setView] = useState('spritesheet') // 'spritesheet' | 'terrain' | 'collection_view'
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settings, setSettings] = useState({ terrainCategories: [], collectionNames: [] })
+  const [selectedCollectionSprite, setSelectedCollectionSprite] = useState(null)
 
   const loadSpriteData = useCallback(async (sheet) => {
     setLoading(true)
@@ -183,10 +185,17 @@ export default function App() {
     setView('spritesheet')
   }
 
-  const switchToCollections = () => {
+  const switchToTerrain = () => {
     setSelectedGroupId(null)
     setSelectedSprite(null)
-    setView('collections')
+    setView('terrain')
+  }
+
+  const switchToCollectionView = () => {
+    setSelectedGroupId(null)
+    setSelectedSprite(null)
+    setSelectedCollectionSprite(null)
+    setView('collection_view')
   }
 
   return (
@@ -205,7 +214,7 @@ export default function App() {
             return (
             <button
               key={sheet.name}
-              className={`sidebar-btn ${activeSheet.name === sheet.name && view === 'spritesheet' ? 'active' : ''}`}
+              className={`sidebar-btn ${activeSheet.name === sheet.name ? 'active' : ''}`}
               onClick={() => switchToSpritesheet(sheet)}
               title={sidebarOpen ? '' : sheet.label}
             >
@@ -247,12 +256,16 @@ export default function App() {
               onClick={() => { setMode('group'); setSelectedSprite(null); setView('spritesheet') }}
             >Group</button>
             <button
-              className={`view-tab collections-tab ${view === 'collections' ? 'active' : ''}`}
-              onClick={switchToCollections}
-            >Terrain Collections</button>
+              className={`view-tab collections-tab ${view === 'terrain' ? 'active' : ''}`}
+              onClick={switchToTerrain}
+            >Terrain</button>
+            <button
+              className={`view-tab ${view === 'collection_view' ? 'active' : ''}`}
+              onClick={switchToCollectionView}
+            >Collections</button>
           </div>
 
-          {view === 'collections' ? (
+          {view === 'terrain' ? (
             loading ? (
               <div className="loading">Loading sprite data...</div>
             ) : spriteData ? (
@@ -265,6 +278,40 @@ export default function App() {
             ) : (
               <div className="loading">Failed to load sprite data</div>
             )
+          ) : view === 'collection_view' ? (
+            <div className="viewer-content">
+              <div className="viewer-panel" style={{ padding: 0 }}>
+              {loading ? (
+                <div className="loading">Loading sprite data...</div>
+              ) : spriteData ? (
+                <CollectionView
+                  spriteData={spriteData}
+                  spritesheetName={activeSheet.name}
+                  collectionNames={settings.collectionNames}
+                  onUpdateSprite={handleUpdateSprite}
+                  onSelectSprite={(sprite) => setSelectedCollectionSprite(sprite)}
+                />
+              ) : (
+                <div className="loading">Failed to load sprite data</div>
+              )}
+            </div>
+            <aside className="info-panel">
+              {selectedCollectionSprite ? (
+                <SpriteInfoPanel
+                  key={`coll-sprite-${selectedCollectionSprite.row}-${selectedCollectionSprite.col}`}
+                  sprite={selectedCollectionSprite}
+                  spritesheetName={activeSheet.name}
+                  terrainCategories={settings.terrainCategories}
+                  collectionNames={settings.collectionNames}
+                  onUpdate={handleUpdateSprite}
+                />
+              ) : (
+                <div className="no-selection">
+                  <p>Click on a sprite to edit its title and description.</p>
+                </div>
+              )}
+            </aside>
+            </div>
           ) : (
             <div className="viewer-content">
               <div className="viewer-panel">
