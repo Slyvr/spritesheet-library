@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import './SpriteSheetViewer.css'
 
 const SPRITE_SIZE = 32
-const SCALE_FACTORS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20]
+const SCALE_FACTORS = [1, 2, 3, 4]
 
 const GROUP_COLORS = [
   'rgba(233, 69, 96, 0.35)',
@@ -284,7 +284,7 @@ export default function SpriteSheetViewer({
           Zoom: {zoom}x
         </span>
         <div className="zoom-controls">
-          {SCALE_FACTORS.filter(f => f <= 10).map(f => (
+          {SCALE_FACTORS.map(f => (
             <button
               key={f}
               className={`zoom-btn ${zoom === f ? 'active' : ''}`}

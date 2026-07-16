@@ -19,7 +19,7 @@ cd server && node index.js
 
 ### Spritesheet Viewer
 
-Canvas-based viewer with configurable zoom (1×–20×), pixel-perfect rendering, click-to-select, scroll-to-zoom, and middle-click-to-pan.
+Canvas-based viewer with configurable zoom (1×–4×), pixel-perfect rendering, click-to-select, scroll-to-zoom, and middle-click-to-pan.
 
 ### Tab Bar (Sprite | Group | Terrain | Collections | Settings)
 
