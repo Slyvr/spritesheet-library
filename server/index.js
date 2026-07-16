@@ -379,13 +379,13 @@ app.get('/api/download/all', (req, res) => {
   for (const sheet of sheets) {
     const pngPath = path.join(SPRITESHEETS_DIR, sheet.name);
     if (fs.existsSync(pngPath)) {
-      archive.file(pngPath, { name: `spritesheets/${sheet.name}` });
+      archive.file(pngPath, { name: sheet.name });
     }
 
     const jsonName = sheet.name.replace(/\.png$/i, '') + '.json';
     const jsonPath = path.join(DATA_DIR, jsonName);
     if (fs.existsSync(jsonPath)) {
-      archive.file(jsonPath, { name: `data/${jsonName}` });
+      archive.file(jsonPath, { name: jsonName });
     }
   }
 
