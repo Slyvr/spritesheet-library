@@ -11,6 +11,8 @@ export default function SpriteInfoPanel({ sprite, group, spritesheetName, onUpda
 function SpriteEditor({ sprite, spritesheetName, onUpdate }) {
   const [title, setTitle] = useState(sprite.title || '')
   const [description, setDescription] = useState(sprite.description || '')
+  const [terrainCategory, setTerrainCategory] = useState(sprite.terrainCategory || '')
+  const [collectionName, setCollectionName] = useState(sprite.collectionName || '')
   const [tags, setTags] = useState(sprite.tags || [])
   const [tagInput, setTagInput] = useState('')
   const [dirty, setDirty] = useState(false)
@@ -18,17 +20,23 @@ function SpriteEditor({ sprite, spritesheetName, onUpdate }) {
 
   const titleRef = useRef(title)
   const descRef = useRef(description)
+  const terrainCategoryRef = useRef(terrainCategory)
+  const collectionNameRef = useRef(collectionName)
   const tagsRef = useRef(tags)
   titleRef.current = title
   descRef.current = description
+  terrainCategoryRef.current = terrainCategory
+  collectionNameRef.current = collectionName
   tagsRef.current = tags
 
   useEffect(() => {
     setTitle(sprite.title || '')
     setDescription(sprite.description || '')
+    setTerrainCategory(sprite.terrainCategory || '')
+    setCollectionName(sprite.collectionName || '')
     setTags(sprite.tags || [])
     setDirty(false)
-  }, [sprite.row, sprite.col, sprite.title, sprite.description, sprite.tags])
+  }, [sprite.row, sprite.col, sprite.title, sprite.description, sprite.terrainCategory, sprite.collectionName, sprite.tags])
 
   const save = useCallback(() => {
     onUpdate({
@@ -39,6 +47,8 @@ function SpriteEditor({ sprite, spritesheetName, onUpdate }) {
       y: sprite.row * 32,
       title: titleRef.current,
       description: descRef.current,
+      terrainCategory: terrainCategoryRef.current,
+      collectionName: collectionNameRef.current,
       tags: tagsRef.current,
     })
     setDirty(false)
@@ -61,6 +71,16 @@ function SpriteEditor({ sprite, spritesheetName, onUpdate }) {
 
   const handleDescChange = (e) => {
     setDescription(e.target.value)
+    schedule()
+  }
+
+  const handleTerrainCategoryChange = (e) => {
+    setTerrainCategory(e.target.value)
+    schedule()
+  }
+
+  const handleCollectionNameChange = (e) => {
+    setCollectionName(e.target.value)
     schedule()
   }
 
@@ -115,6 +135,14 @@ function SpriteEditor({ sprite, spritesheetName, onUpdate }) {
             />
           </div>
         </div>
+        <div className="field-group">
+          <label htmlFor="sprite-terrain">Terrain Category</label>
+          <input id="sprite-terrain" type="text" value={terrainCategory} onChange={handleTerrainCategoryChange} placeholder="e.g. grass, desert, water..." />
+        </div>
+        <div className="field-group">
+          <label htmlFor="sprite-collection">Collection Name</label>
+          <input id="sprite-collection" type="text" value={collectionName} onChange={handleCollectionNameChange} placeholder="e.g. starter_house, ruins_a..." />
+        </div>
       </div>
       <AutoSaveIndicator dirty={dirty} />
     </div>
@@ -124,25 +152,35 @@ function SpriteEditor({ sprite, spritesheetName, onUpdate }) {
 function GroupEditor({ group, spritesheetName, onUpdateGroup, onDeleteGroup }) {
   const [title, setTitle] = useState(group.title || '')
   const [description, setDescription] = useState(group.description || '')
+  const [terrainCategory, setTerrainCategory] = useState(group.terrainCategory || '')
+  const [collectionName, setCollectionName] = useState(group.collectionName || '')
   const [dirty, setDirty] = useState(false)
   const timer = useRef(null)
 
   const titleRef = useRef(title)
   const descRef = useRef(description)
+  const terrainCategoryRef = useRef(terrainCategory)
+  const collectionNameRef = useRef(collectionName)
   titleRef.current = title
   descRef.current = description
+  terrainCategoryRef.current = terrainCategory
+  collectionNameRef.current = collectionName
 
   useEffect(() => {
     setTitle(group.title || '')
     setDescription(group.description || '')
+    setTerrainCategory(group.terrainCategory || '')
+    setCollectionName(group.collectionName || '')
     setDirty(false)
-  }, [group.id, group.title, group.description])
+  }, [group.id, group.title, group.description, group.terrainCategory, group.collectionName])
 
   const save = useCallback(() => {
     onUpdateGroup({
       ...group,
       title: titleRef.current,
       description: descRef.current,
+      terrainCategory: terrainCategoryRef.current,
+      collectionName: collectionNameRef.current,
     })
     setDirty(false)
   }, [group, onUpdateGroup])
@@ -164,6 +202,16 @@ function GroupEditor({ group, spritesheetName, onUpdateGroup, onDeleteGroup }) {
 
   const handleDescChange = (e) => {
     setDescription(e.target.value)
+    schedule()
+  }
+
+  const handleTerrainCategoryChange = (e) => {
+    setTerrainCategory(e.target.value)
+    schedule()
+  }
+
+  const handleCollectionNameChange = (e) => {
+    setCollectionName(e.target.value)
     schedule()
   }
 
@@ -215,6 +263,14 @@ function GroupEditor({ group, spritesheetName, onUpdateGroup, onDeleteGroup }) {
         <div className="field-group">
           <label htmlFor="group-desc">Group Description</label>
           <textarea id="group-desc" value={description} onChange={handleDescChange} placeholder="Enter group description..." rows={5} />
+        </div>
+        <div className="field-group">
+          <label htmlFor="group-terrain">Terrain Category</label>
+          <input id="group-terrain" type="text" value={terrainCategory} onChange={handleTerrainCategoryChange} placeholder="e.g. grass, desert, water..." />
+        </div>
+        <div className="field-group">
+          <label htmlFor="group-collection">Collection Name</label>
+          <input id="group-collection" type="text" value={collectionName} onChange={handleCollectionNameChange} placeholder="e.g. starter_house, ruins_a..." />
         </div>
       </div>
 
