@@ -3,5 +3,6 @@ client/build/
 client/node_modules/
 server/node_modules/
 server/data/
+server/data.db*
 *.log
 .DS_Store

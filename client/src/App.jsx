@@ -440,7 +440,7 @@ export default function App() {
                 <div className="loading">Loading spritesheet data...</div>
               ) : spriteData ? (
                 <SpriteSheetViewer
-                  spritesheetUrl={`/spritesheets/${activeSheet.name}`}
+                  spritesheetUrl={`/api/spritesheet-img/${activeSheet.name}`}
                   spriteData={spriteData}
                   mode={mode}
                   selectedRow={selectedRow}

@@ -3,13 +3,21 @@ const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
 const archiver = require('archiver');
+const db = require('./db');
 
 const app = express();
 const PORT = 3011;
-const SPRITESHEETS_DIR = path.join(__dirname, '..', 'public', 'spritesheets');
-const DATA_DIR = path.join(__dirname, 'data');
+
+// ── Trust proxy so req.ip reads the real client IP from X-Forwarded-For ──
+app.set('trust proxy', 1);
 
 app.use(express.json());
+
+// ── IP extraction middleware ──
+app.use((req, _res, next) => {
+  req.clientIp = db.normaliseIp(req.ip || req.socket.remoteAddress || 'unknown');
+  next();
+});
 
 // ── Multer setup for spritesheet uploads ──
 
@@ -24,101 +32,27 @@ if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
 
-// Ensure spritesheets directory exists
-if (!fs.existsSync(SPRITESHEETS_DIR)) {
-  fs.mkdirSync(SPRITESHEETS_DIR, { recursive: true });
+// ── Migrate existing filesystem data to SQLite on startup ──
+const migrated = db.migrateExistingData('127.0.0.1');
+if (migrated > 0) {
+  console.log(`Migrated ${migrated} items from filesystem to database`);
 }
 
-// Ensure data directory exists
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-
-const SPRITE_SIZE = 32;
-const COLS = 32;
-const ROWS = 32;
-
-/**
- * Load or create sprite data for a given spritesheet.
- * Data file lives at /server/data/{spritesheet_name}.json
- */
-function loadSpriteData(sheetName) {
-  const jsonPath = path.join(DATA_DIR, sheetName.replace(/\.png$/, '') + '.json');
-
-  if (fs.existsSync(jsonPath)) {
-    const raw = fs.readFileSync(jsonPath, 'utf-8');
-    return JSON.parse(raw);
-  }
-
-  // Create default data: all 1024 sprites with empty title/description
-  const sprites = [];
-  let id = 0;
-  for (let row = 0; row < ROWS; row++) {
-    for (let col = 0; col < COLS; col++) {
-      sprites.push({
-        id: id++,
-        row,
-        col,
-        x: col * SPRITE_SIZE,
-        y: row * SPRITE_SIZE,
-        title: '',
-        description: '',
-      });
-    }
-  }
-
-  const data = {
-    spritesheet: sheetName,
-    spriteSize: SPRITE_SIZE,
-    columns: COLS,
-    rows: ROWS,
-    sprites,
-    groups: [],
-    terrainCategories: [],
-    collectionNames: [],
-  };
-
-  // Write the default data
-  fs.writeFileSync(jsonPath, JSON.stringify(data, null, 2), 'utf-8');
-  return data;
-}
-
-/**
- * Ensure data file has all expected fields (migration-safe).
- */
-function ensureFields(data) {
-  if (!data.groups) data.groups = [];
-  if (!data.terrainCategories) data.terrainCategories = [];
-  if (!data.collectionNames) data.collectionNames = [];
-  return data;
-}
-
-/**
- * Load sprite data, ensuring all expected fields exist.
- */
-function loadSpriteDataSafe(sheetName) {
-  return ensureFields(loadSpriteData(sheetName));
-}
-
-/**
- * Save the full sprite data back to the JSON file.
- */
-function saveSpriteData(sheetName, data) {
-  const jsonPath = path.join(DATA_DIR, sheetName.replace(/\.png$/, '') + '.json');
-  fs.writeFileSync(jsonPath, JSON.stringify(data, null, 2), 'utf-8');
-}
+// ── Sprite data endpoints ──
 
 // GET /api/sprite-data/:sheetName - Load all sprite data for a spritesheet
 app.get('/api/sprite-data/:sheetName', (req, res) => {
   try {
     const { sheetName } = req.params;
-    const imgPath = path.join(SPRITESHEETS_DIR, sheetName);
+    const ip = req.clientIp;
 
-    if (!fs.existsSync(imgPath)) {
+    // Verify the IP has this sheet uploaded
+    const png = db.getUploadedPng(ip, sheetName);
+    if (!png) {
       return res.status(404).json({ error: 'Spritesheet not found' });
     }
 
-    const data = loadSpriteDataSafe(sheetName);
+    const data = db.loadSpriteDataSafe(ip, sheetName);
     res.json(data);
   } catch (err) {
     console.error('Error loading sprite data:', err);
@@ -130,13 +64,14 @@ app.get('/api/sprite-data/:sheetName', (req, res) => {
 app.put('/api/sprite-data/:sheetName', (req, res) => {
   try {
     const { sheetName } = req.params;
+    const ip = req.clientIp;
     const updatedSprite = req.body;
 
     if (!updatedSprite || updatedSprite.row === undefined || updatedSprite.col === undefined) {
       return res.status(400).json({ error: 'Invalid sprite data: row and col required' });
     }
 
-    const data = loadSpriteData(sheetName);
+    const data = db.loadSpriteData(ip, sheetName);
     const idx = data.sprites.findIndex(
       s => s.row === updatedSprite.row && s.col === updatedSprite.col
     );
@@ -147,7 +82,7 @@ app.put('/api/sprite-data/:sheetName', (req, res) => {
       data.sprites.push(updatedSprite);
     }
 
-    saveSpriteData(sheetName, data);
+    db.saveSpriteData(ip, sheetName, data);
     res.json({ success: true });
   } catch (err) {
     console.error('Error saving sprite data:', err);
@@ -159,13 +94,16 @@ app.put('/api/sprite-data/:sheetName', (req, res) => {
 app.put('/api/groups/:sheetName', (req, res) => {
   try {
     const { sheetName } = req.params;
+    const ip = req.clientIp;
     const { groups } = req.body;
+
     if (!Array.isArray(groups)) {
       return res.status(400).json({ error: 'groups must be an array' });
     }
-    const data = loadSpriteDataSafe(sheetName);
+
+    const data = db.loadSpriteDataSafe(ip, sheetName);
     data.groups = groups;
-    saveSpriteData(sheetName, data);
+    db.saveSpriteData(ip, sheetName, data);
     res.json({ success: true });
   } catch (err) {
     console.error('Error saving groups:', err);
@@ -177,9 +115,11 @@ app.put('/api/groups/:sheetName', (req, res) => {
 app.delete('/api/groups/:sheetName/:groupId', (req, res) => {
   try {
     const { sheetName, groupId } = req.params;
-    const data = loadSpriteDataSafe(sheetName);
+    const ip = req.clientIp;
+
+    const data = db.loadSpriteDataSafe(ip, sheetName);
     data.groups = data.groups.filter(g => g.id !== groupId);
-    saveSpriteData(sheetName, data);
+    db.saveSpriteData(ip, sheetName, data);
     res.json({ success: true });
   } catch (err) {
     console.error('Error deleting group:', err);
@@ -189,39 +129,26 @@ app.delete('/api/groups/:sheetName/:groupId', (req, res) => {
 
 // ── Spritesheets listing ──
 
-const LABEL_OVERRIDES = {
-  'base_out_atlas.png': 'Base Out Atlas',
-  'terrain_atlas.png': 'Terrain Atlas',
-};
-
-function listSpritesheets() {
-  if (!fs.existsSync(SPRITESHEETS_DIR)) return [];
-  const files = fs.readdirSync(SPRITESHEETS_DIR);
-  return files
-    .filter(f => f.endsWith('.png'))
-    .sort()
-    .map(name => ({
-      name,
-      label: LABEL_OVERRIDES[name] || name.replace(/\.png$/i, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
-    }));
-}
-
-// GET /api/spritesheets - List available spritesheets
-app.get('/api/spritesheets', (_req, res) => {
+// GET /api/spritesheets - List spritesheets visible to this IP
+app.get('/api/spritesheets', (req, res) => {
   try {
-    res.json(listSpritesheets());
+    const ip = req.clientIp;
+    res.json(db.listSpritesheets(ip));
   } catch (err) {
     console.error('Error listing spritesheets:', err);
     res.status(500).json({ error: 'Failed to list spritesheets' });
   }
 });
 
-// POST /api/upload - Upload spritesheet PNG + optional JSON
+// ── Upload ──
+
+// POST /api/upload - Upload spritesheet PNG + optional JSON (stored per-IP)
 app.post('/api/upload', upload.fields([
   { name: 'png', maxCount: 1 },
   { name: 'json', maxCount: 1 },
 ]), (req, res) => {
   try {
+    const ip = req.clientIp;
     const pngFile = req.files?.png?.[0];
     const jsonFile = req.files?.json?.[0];
 
@@ -236,55 +163,43 @@ app.post('/api/upload', upload.fields([
     }
 
     const baseName = pngFile.originalname.replace(/\.png$/i, '').replace(/[^a-zA-Z0-9_-]/g, '_');
-    const pngDest = path.join(SPRITESHEETS_DIR, `${baseName}.png`);
+    const sheetName = `${baseName}.png`;
 
-    // Move PNG to spritesheets directory
-    fs.copyFileSync(pngFile.path, pngDest);
+    // Read PNG into buffer and store in SQLite
+    const pngBuffer = fs.readFileSync(pngFile.path);
+    db.storeUploadedPng(ip, sheetName, pngBuffer, pngFile.originalname);
     fs.unlinkSync(pngFile.path);
 
     // Handle JSON data file
-    const jsonDest = path.join(DATA_DIR, `${baseName}.json`);
-
     if (jsonFile) {
-      // Validate JSON extension
       if (!jsonFile.originalname.toLowerCase().endsWith('.json')) {
         return res.status(400).json({ error: 'JSON file must have a .json extension' });
       }
-      // Move to data directory (overwrites if exists)
-      fs.copyFileSync(jsonFile.path, jsonDest);
-      fs.unlinkSync(jsonFile.path);
-    } else {
-      // Generate default data
-      const sprites = [];
-      let id = 0;
-      for (let row = 0; row < ROWS; row++) {
-        for (let col = 0; col < COLS; col++) {
-          sprites.push({
-            id: id++,
-            row, col,
-            x: col * SPRITE_SIZE,
-            y: row * SPRITE_SIZE,
-            title: '', description: '',
-          });
-        }
+      const jsonContent = fs.readFileSync(jsonFile.path, 'utf-8');
+      try {
+        const data = JSON.parse(jsonContent);
+        if (!data.sprites) data.sprites = [];
+        if (!data.groups) data.groups = [];
+        if (!data.terrainCategories) data.terrainCategories = [];
+        if (!data.collectionNames) data.collectionNames = [];
+        data.spritesheet = sheetName;
+        db.saveSpriteData(ip, sheetName, data);
+      } catch (e) {
+        // Invalid JSON — generate defaults below
+        console.warn('Uploaded JSON was invalid, generating defaults:', e.message);
+        // Fall through to default generation
       }
-      const data = {
-        spritesheet: `${baseName}.png`,
-        spriteSize: SPRITE_SIZE,
-        columns: COLS,
-        rows: ROWS,
-        sprites,
-        groups: [],
-        terrainCategories: [],
-        collectionNames: [],
-      };
-      fs.writeFileSync(jsonDest, JSON.stringify(data, null, 2), 'utf-8');
+      fs.unlinkSync(jsonFile.path);
     }
 
-    res.json({ success: true, name: `${baseName}.png`, label: listSpritesheets().find(s => s.name === `${baseName}.png`)?.label || baseName });
+    // If no JSON was provided (or it was invalid), ensure default sprite data exists
+    const existing = db.loadSpriteDataSafe(ip, sheetName);
+
+    const sheets = db.listSpritesheets(ip);
+    const label = sheets.find(s => s.name === sheetName)?.label || baseName;
+    res.json({ success: true, name: sheetName, label });
   } catch (err) {
     console.error('Error uploading spritesheet:', err);
-    // Clean up uploads on error
     if (req.files) {
       Object.values(req.files).flat().forEach(f => {
         try { fs.unlinkSync(f.path); } catch {}
@@ -294,22 +209,56 @@ app.post('/api/upload', upload.fields([
   }
 });
 
+// ── Sprite image serving ──
+
+// GET /api/spritesheet-img/:sheetName - Serve a spritesheet PNG (per-IP upload)
+app.get('/api/spritesheet-img/:sheetName', (req, res) => {
+  try {
+    const { sheetName } = req.params;
+    const ip = req.clientIp;
+
+    // Check per-IP uploaded PNGs first
+    const png = db.getUploadedPng(ip, sheetName);
+    if (png) {
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'private, max-age=3600');
+      return res.send(png);
+    }
+
+    // Fallback: global spritesheets directory (base shared assets)
+    const globalPath = path.join(__dirname, '..', 'public', 'spritesheets', sheetName);
+    if (fs.existsSync(globalPath)) {
+      return res.sendFile(globalPath, {
+        headers: {
+          'Cache-Control': 'public, immutable, max-age=31536000',
+        },
+      });
+    }
+
+    res.status(404).json({ error: 'Spritesheet not found' });
+  } catch (err) {
+    console.error('Error serving spritesheet image:', err);
+    res.status(500).json({ error: 'Failed to serve spritesheet image' });
+  }
+});
+
 // ── Per-sheet settings ──
 
 // PUT /api/sprite-settings/:sheetName - Save terrain categories and collection names
 app.put('/api/sprite-settings/:sheetName', (req, res) => {
   try {
     const { sheetName } = req.params;
+    const ip = req.clientIp;
     const { terrainCategories, collectionNames } = req.body;
 
     if (!Array.isArray(terrainCategories) || !Array.isArray(collectionNames)) {
       return res.status(400).json({ error: 'terrainCategories and collectionNames must be arrays' });
     }
 
-    const data = loadSpriteDataSafe(sheetName);
+    const data = db.loadSpriteDataSafe(ip, sheetName);
     data.terrainCategories = terrainCategories;
     data.collectionNames = collectionNames;
-    saveSpriteData(sheetName, data);
+    db.saveSpriteData(ip, sheetName, data);
     res.json({ success: true });
   } catch (err) {
     console.error('Error saving sprite settings:', err);
@@ -319,35 +268,39 @@ app.put('/api/sprite-settings/:sheetName', (req, res) => {
 
 // ── Download endpoints ──
 
-// Download spritesheet PNG
+// Download spritesheet PNG (per-IP)
 app.get('/api/download/png/:sheetName', (req, res) => {
   try {
     const { sheetName } = req.params;
-    const imgPath = path.join(SPRITESHEETS_DIR, sheetName);
+    const ip = req.clientIp;
 
-    if (!fs.existsSync(imgPath)) {
+    const png = db.getUploadedPng(ip, sheetName);
+    if (!png) {
       return res.status(404).json({ error: 'Spritesheet not found' });
     }
 
     const safeName = sheetName.replace(/[^a-zA-Z0-9._-]/g, '_');
-    res.download(imgPath, safeName);
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeName}"`);
+    res.send(png);
   } catch (err) {
     console.error('Error downloading spritesheet:', err);
     res.status(500).json({ error: 'Download failed' });
   }
 });
 
-// Download sprite data JSON
+// Download sprite data JSON (per-IP)
 app.get('/api/download/json/:sheetName', (req, res) => {
   try {
     const { sheetName } = req.params;
-    const imgPath = path.join(SPRITESHEETS_DIR, sheetName);
+    const ip = req.clientIp;
 
-    if (!fs.existsSync(imgPath)) {
+    const png = db.getUploadedPng(ip, sheetName);
+    if (!png) {
       return res.status(404).json({ error: 'Spritesheet not found' });
     }
 
-    const data = loadSpriteDataSafe(sheetName);
+    const data = db.loadSpriteDataSafe(ip, sheetName);
     const jsonName = sheetName.replace(/\.png$/i, '') + '.json';
     res.setHeader('Content-Disposition', `attachment; filename="${jsonName}"`);
     res.json(data);
@@ -357,9 +310,11 @@ app.get('/api/download/json/:sheetName', (req, res) => {
   }
 });
 
-// GET /api/download/all - Download all spritesheets + JSON data as a zip
+// GET /api/download/all - Download all IP's spritesheets + JSON as a zip
 app.get('/api/download/all', (req, res) => {
-  const sheets = listSpritesheets();
+  const ip = req.clientIp;
+  const sheets = db.listSpritesheets(ip);
+
   if (sheets.length === 0) {
     return res.status(404).json({ error: 'No spritesheets available' });
   }
@@ -377,23 +332,28 @@ app.get('/api/download/all', (req, res) => {
   archive.pipe(res);
 
   for (const sheet of sheets) {
-    const pngPath = path.join(SPRITESHEETS_DIR, sheet.name);
-    if (fs.existsSync(pngPath)) {
-      archive.file(pngPath, { name: sheet.name });
+    const png = db.getUploadedPng(ip, sheet.name);
+    if (png) {
+      archive.append(png, { name: sheet.name });
     }
 
     const jsonName = sheet.name.replace(/\.png$/i, '') + '.json';
-    const jsonPath = path.join(DATA_DIR, jsonName);
-    if (fs.existsSync(jsonPath)) {
-      archive.file(jsonPath, { name: jsonName });
+    try {
+      const data = db.loadSpriteDataSafe(ip, sheet.name);
+      archive.append(JSON.stringify(data, null, 2), { name: jsonName });
+    } catch {
+      // Skip if data can't be loaded
     }
   }
 
   archive.finalize();
 });
 
-// Serve static spritesheets
-app.use('/spritesheets', express.static(SPRITESHEETS_DIR));
+// ── Legacy spritesheet image serving (for backward compat / static reference) ──
+app.use('/spritesheets', express.static(path.join(__dirname, '..', 'public', 'spritesheets'), {
+  maxAge: '1y',
+  immutable: true,
+}));
 
 app.listen(PORT, () => {
   console.log(`Sprite data server running on http://localhost:${PORT}`);
