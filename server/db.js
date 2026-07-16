@@ -170,7 +170,7 @@ function listSpritesheets(ip) {
   return rows.map(r => {
     const name = r.sheet_name;
     const label = LABEL_OVERRIDES[name]
-      || name.replace(/\.png$/i, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      || name.replace(/\.png$/i, '').replace(/[_-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     return { name, label };
   });
 }
