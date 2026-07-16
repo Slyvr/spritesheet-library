@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import SpriteSheetViewer from './components/SpriteSheetViewer'
 import SpriteInfoPanel from './components/SpriteInfoPanel'
 import SpriteCollectionsView from './components/SpriteCollectionsView'
@@ -6,27 +6,23 @@ import CollectionView from './components/CollectionView'
 import SettingsPanel from './components/SettingsPanel'
 import './App.css'
 
-const SPRITESHEETS = [
-  { name: 'base_out_atlas.png', label: 'Base Out Atlas' },
-  { name: 'terrain_atlas.png', label: 'Terrain Atlas' },
-]
-
-// Group IDs use timestamp + random for universal browser compatibility
-
 export default function App() {
-  const [activeSheet, setActiveSheet] = useState(SPRITESHEETS[0])
+  const [sheetsList, setSheetsList] = useState([])
+  const [activeSheet, setActiveSheet] = useState(null)
   const [spriteData, setSpriteData] = useState(null)
   const [selectedSprite, setSelectedSprite] = useState(null)
   const [selectedRow, setSelectedRow] = useState(null)
   const [selectedCol, setSelectedCol] = useState(null)
   const [selectedGroupId, setSelectedGroupId] = useState(null)
-  const [mode, setMode] = useState('sprite') // 'sprite' | 'group'
-  const [view, setView] = useState('spritesheet') // 'spritesheet' | 'terrain' | 'collection_view'
+  const [mode, setMode] = useState('sprite')
+  const [view, setView] = useState('spritesheet')
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [uploading, setUploading] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settings, setSettings] = useState({ terrainCategories: [], collectionNames: [] })
   const [selectedCollectionSprite, setSelectedCollectionSprite] = useState(null)
+  const fileInputRef = useRef(null)
 
   const loadSpriteData = useCallback(async (sheet) => {
     setLoading(true)
@@ -48,7 +44,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    loadSpriteData(activeSheet)
+    if (activeSheet) loadSpriteData(activeSheet)
   }, [activeSheet, loadSpriteData])
 
   // Load settings
@@ -62,6 +58,67 @@ export default function App() {
       })
       .catch(err => console.error('Error loading settings:', err))
   }, [])
+
+  // Load spritesheets list
+  useEffect(() => {
+    fetch('/api/spritesheets')
+      .then(r => r.json())
+      .then(list => {
+        setSheetsList(list)
+        if (list.length > 0) {
+          setActiveSheet(prev => prev || list[0])
+        }
+      })
+      .catch(err => console.error('Error loading spritesheets:', err))
+  }, [])
+
+  const handleUpload = async (e) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    const pngFiles = []
+    const jsonFiles = []
+    for (const f of files) {
+      if (f.name.toLowerCase().endsWith('.png')) pngFiles.push(f)
+      else if (f.name.toLowerCase().endsWith('.json')) jsonFiles.push(f)
+    }
+
+    if (pngFiles.length === 0) {
+      alert('Please select at least one PNG spritesheet file.')
+      return
+    }
+    if (pngFiles.length > 1) {
+      alert('Only one PNG file can be uploaded at a time.')
+      return
+    }
+    if (jsonFiles.length > 1) {
+      alert('Only one JSON file can be uploaded at a time.')
+      return
+    }
+
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('png', pngFiles[0])
+      if (jsonFiles.length === 1) fd.append('json', jsonFiles[0])
+
+      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      if (!res.ok) {
+        const err = await res.json()
+        alert(err.error || 'Upload failed')
+        return
+      }
+      // Refresh sheets list
+      const list = await (await fetch('/api/spritesheets')).json()
+      setSheetsList(list)
+    } catch (err) {
+      console.error('Upload error:', err)
+      alert('Upload failed: ' + err.message)
+    } finally {
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   const handleSelectSprite = (row, col) => {
     if (mode === 'group') {
@@ -209,8 +266,34 @@ export default function App() {
 
       <div className="app-body">
         <div className={`sidebar ${sidebarOpen ? '' : 'collapsed'}`}>
+          <div className="sidebar-upload-area">
+            {sidebarOpen && (
+              <>
+                <button
+                  className="sidebar-btn sidebar-upload-btn"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  title="Upload spritesheet"
+                >
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 1v8M5 5l4-4 4 4" />
+                    <path d="M1 13v4h16v-4" />
+                  </svg>
+                  <span>{uploading ? 'Uploading...' : 'Upload'}</span>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".png,.json"
+                  multiple
+                  style={{ display: 'none' }}
+                  onChange={handleUpload}
+                />
+              </>
+            )}
+          </div>
           <div className="sidebar-section-label">{sidebarOpen && 'Sheets'}</div>
-          {SPRITESHEETS.map(sheet => {
+          {sheetsList.map(sheet => {
             return (
             <div key={sheet.name} className="sidebar-sheet-row">
               <button

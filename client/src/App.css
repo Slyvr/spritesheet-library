@@ -57,8 +57,8 @@
 /* ─── Sidebar ─── */
 
 .sidebar {
-  width: 200px;
-  min-width: 200px;
+  width: 240px;
+  min-width: 240px;
   background: #16213e;
   border-right: 1px solid #0f3460;
   display: flex;
@@ -117,6 +117,28 @@
 .sidebar-btn.collections-btn.active {
   background: #2e7d4e;
   border-color: #2e7d4e;
+}
+
+/* ─── Upload area ─── */
+
+.sidebar-upload-area {
+  padding: 0 0 4px;
+  border-bottom: 1px solid #0f3460;
+  margin-bottom: 4px;
+}
+
+.sidebar-upload-btn {
+  color: #4FC3F7;
+}
+
+.sidebar-upload-btn:hover {
+  background: #0f3460;
+  color: #80d8ff;
+}
+
+.sidebar-upload-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .sidebar-btn svg {

@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
 
 const app = express();
 const PORT = 3011;
@@ -8,6 +9,24 @@ const SPRITESHEETS_DIR = path.join(__dirname, '..', 'public', 'spritesheets');
 const DATA_DIR = path.join(__dirname, 'data');
 
 app.use(express.json());
+
+// ── Multer setup for spritesheet uploads ──
+
+const upload = multer({
+  dest: path.join(__dirname, '..', 'uploads'),
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+});
+
+// Ensure upload directory exists
+const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
+// Ensure spritesheets directory exists
+if (!fs.existsSync(SPRITESHEETS_DIR)) {
+  fs.mkdirSync(SPRITESHEETS_DIR, { recursive: true });
+}
 
 // Ensure data directory exists
 if (!fs.existsSync(DATA_DIR)) {
@@ -154,6 +173,111 @@ app.delete('/api/groups/:sheetName/:groupId', (req, res) => {
   } catch (err) {
     console.error('Error deleting group:', err);
     res.status(500).json({ error: 'Failed to delete group' });
+  }
+});
+
+// ── Spritesheets listing ──
+
+const LABEL_OVERRIDES = {
+  'base_out_atlas.png': 'Base Out Atlas',
+  'terrain_atlas.png': 'Terrain Atlas',
+};
+
+function listSpritesheets() {
+  if (!fs.existsSync(SPRITESHEETS_DIR)) return [];
+  const files = fs.readdirSync(SPRITESHEETS_DIR);
+  return files
+    .filter(f => f.endsWith('.png'))
+    .sort()
+    .map(name => ({
+      name,
+      label: LABEL_OVERRIDES[name] || name.replace(/\.png$/i, '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+    }));
+}
+
+// GET /api/spritesheets - List available spritesheets
+app.get('/api/spritesheets', (_req, res) => {
+  try {
+    res.json(listSpritesheets());
+  } catch (err) {
+    console.error('Error listing spritesheets:', err);
+    res.status(500).json({ error: 'Failed to list spritesheets' });
+  }
+});
+
+// POST /api/upload - Upload spritesheet PNG + optional JSON
+app.post('/api/upload', upload.fields([
+  { name: 'png', maxCount: 1 },
+  { name: 'json', maxCount: 1 },
+]), (req, res) => {
+  try {
+    const pngFile = req.files?.png?.[0];
+    const jsonFile = req.files?.json?.[0];
+
+    if (!pngFile) {
+      return res.status(400).json({ error: 'A PNG spritesheet file is required' });
+    }
+
+    // Validate PNG extension
+    if (!pngFile.originalname.toLowerCase().endsWith('.png')) {
+      fs.unlinkSync(pngFile.path);
+      return res.status(400).json({ error: 'PNG file must have a .png extension' });
+    }
+
+    const baseName = pngFile.originalname.replace(/\.png$/i, '').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const pngDest = path.join(SPRITESHEETS_DIR, `${baseName}.png`);
+
+    // Move PNG to spritesheets directory
+    fs.copyFileSync(pngFile.path, pngDest);
+    fs.unlinkSync(pngFile.path);
+
+    // Handle JSON data file
+    const jsonDest = path.join(DATA_DIR, `${baseName}.json`);
+
+    if (jsonFile) {
+      // Validate JSON extension
+      if (!jsonFile.originalname.toLowerCase().endsWith('.json')) {
+        return res.status(400).json({ error: 'JSON file must have a .json extension' });
+      }
+      // Move to data directory (overwrites if exists)
+      fs.copyFileSync(jsonFile.path, jsonDest);
+      fs.unlinkSync(jsonFile.path);
+    } else {
+      // Generate default data
+      const sprites = [];
+      let id = 0;
+      for (let row = 0; row < ROWS; row++) {
+        for (let col = 0; col < COLS; col++) {
+          sprites.push({
+            id: id++,
+            row, col,
+            x: col * SPRITE_SIZE,
+            y: row * SPRITE_SIZE,
+            title: '', description: '',
+          });
+        }
+      }
+      const data = {
+        spritesheet: `${baseName}.png`,
+        spriteSize: SPRITE_SIZE,
+        columns: COLS,
+        rows: ROWS,
+        sprites,
+        groups: [],
+      };
+      fs.writeFileSync(jsonDest, JSON.stringify(data, null, 2), 'utf-8');
+    }
+
+    res.json({ success: true, name: `${baseName}.png`, label: listSpritesheets().find(s => s.name === `${baseName}.png`)?.label || baseName });
+  } catch (err) {
+    console.error('Error uploading spritesheet:', err);
+    // Clean up uploads on error
+    if (req.files) {
+      Object.values(req.files).flat().forEach(f => {
+        try { fs.unlinkSync(f.path); } catch {}
+      });
+    }
+    res.status(500).json({ error: 'Upload failed' });
   }
 });
 
