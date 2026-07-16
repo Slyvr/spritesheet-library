@@ -352,17 +352,7 @@ export default function App() {
         <main className="app-main">
           {!activeSheet ? (
             <div className="empty-state">
-              <div className="empty-state-content">
-                <svg width="48" height="48" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 1v8M5 5l4-4 4 4" />
-                  <path d="M1 13v4h16v-4" />
-                </svg>
-                <h2>No spritesheets yet</h2>
-                <p>Upload a PNG spritesheet to get started.</p>
-                <button className="upload-cta" onClick={() => fileInputRef.current?.click()}>
-                  Upload Spritesheet
-                </button>
-              </div>
+              <p>No spritesheets uploaded yet</p>
             </div>
           ) : (
           <>

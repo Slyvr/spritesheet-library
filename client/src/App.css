@@ -303,3 +303,12 @@
   text-align: center;
   padding: 20px;
 }
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #8899aa;
+  font-size: 16px;
+}
