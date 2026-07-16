@@ -6,9 +6,11 @@ import CollectionView from './components/CollectionView'
 import SettingsPanel from './components/SettingsPanel'
 import './App.css'
 
+const FALLBACK_SHEET = { name: 'base_out_atlas.png', label: 'Base Out Atlas' }
+
 export default function App() {
   const [sheetsList, setSheetsList] = useState([])
-  const [activeSheet, setActiveSheet] = useState(null)
+  const [activeSheet, setActiveSheet] = useState(FALLBACK_SHEET)
   const [spriteData, setSpriteData] = useState(null)
   const [selectedSprite, setSelectedSprite] = useState(null)
   const [selectedRow, setSelectedRow] = useState(null)
@@ -44,7 +46,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    if (activeSheet) loadSpriteData(activeSheet)
+    loadSpriteData(activeSheet)
   }, [activeSheet, loadSpriteData])
 
   // Load settings
@@ -65,8 +67,8 @@ export default function App() {
       .then(r => r.json())
       .then(list => {
         setSheetsList(list)
-        if (list.length > 0) {
-          setActiveSheet(prev => prev || list[0])
+        if (list.length > 0 && !list.some(s => s.name === activeSheet.name)) {
+          setActiveSheet(list[0])
         }
       })
       .catch(err => console.error('Error loading spritesheets:', err))
@@ -360,10 +362,7 @@ export default function App() {
         </div>
 
         <main className="app-main">
-          {!activeSheet ? (
-            <div className="loading">Loading spritesheets...</div>
-          ) : (
-          <><div className="view-mode-tabs">
+          <div className="view-mode-tabs">
             <button
               className={`view-tab ${mode === 'sprite' && view === 'spritesheet' ? 'active' : ''}`}
               onClick={() => { setMode('sprite'); setSelectedGroupId(null); setView('spritesheet') }}
@@ -480,8 +479,6 @@ export default function App() {
               )}
             </aside>
             </div>
-          )}
-          </>
           )}
         </main>
       </div>
