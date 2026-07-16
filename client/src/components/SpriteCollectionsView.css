@@ -5,9 +5,9 @@
   overflow: hidden;
 }
 
-/* ─── Left: Tag List ─── */
+/* ─── Left: Category List ─── */
 
-.tag-list-panel {
+.category-list-panel {
   width: 280px;
   min-width: 200px;
   border-right: 1px solid #0f3460;
@@ -27,47 +27,47 @@
   gap: 8px;
 }
 
-.tag-list {
+.category-list {
   flex: 1;
   overflow-y: auto;
   padding: 4px 0;
 }
 
-.no-tags-msg {
+.no-categories-msg {
   padding: 20px 16px;
   color: #666;
   font-size: 13px;
   line-height: 1.5;
 }
 
-.tag-list-item {
+.category-list-item {
   padding: 10px 16px;
   cursor: pointer;
   border-left: 3px solid transparent;
   transition: all 0.1s;
 }
 
-.tag-list-item:hover {
+.category-list-item:hover {
   background: rgba(255, 255, 255, 0.04);
 }
 
-.tag-list-item.selected {
+.category-list-item.selected {
   background: rgba(46, 125, 78, 0.15);
   border-left-color: #2e7d4e;
 }
 
-.tag-item-title {
+.category-item-title {
   font-size: 13px;
   font-weight: 500;
   color: #e0e0e0;
   margin-bottom: 2px;
 }
 
-.tag-list-item.selected .tag-item-title {
+.category-list-item.selected .category-item-title {
   color: #6aaa7a;
 }
 
-.tag-item-meta {
+.category-item-meta {
   font-size: 11px;
   color: #666;
 }
@@ -99,7 +99,7 @@
   padding: 16px;
 }
 
-.no-tag-selected {
+.no-category-selected {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -157,8 +157,7 @@
   box-shadow: 0 0 4px rgba(76, 175, 80, 0.6);
 }
 
-/* Corner & edge positions — center of each, relative to 80x80 cell */
-
+/* Corner & edge positions */
 .dot.tl  { top: 0;    left: 0; }
 .dot.tc  { top: 0;    left: 50%; }
 .dot.tr  { top: 0;    left: 100%; }
@@ -172,4 +171,52 @@
   font-size: 10px;
   color: #555;
   font-family: monospace;
+}
+
+/* ─── Group Card ─── */
+
+.group-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 6px;
+  padding: 10px 12px;
+  min-width: 200px;
+}
+
+.group-card-preview .sprite-image {
+  border-color: #2a5a3a;
+}
+
+.group-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.group-card-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #e0e0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.group-card-meta {
+  font-size: 11px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.group-card-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: #2e7d4e;
+  background: rgba(46, 125, 78, 0.12);
+  padding: 2px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
 }

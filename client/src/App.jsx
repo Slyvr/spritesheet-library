@@ -211,7 +211,7 @@ export default function App() {
             className={`sheet-tab collections-tab ${view === 'collections' ? 'active' : ''}`}
             onClick={switchToCollections}
           >
-            Sprite Collections
+            Terrain Collections
           </button>
         </nav>
       </header>
@@ -238,6 +238,7 @@ export default function App() {
             <SpriteCollectionsView
               spriteData={spriteData}
               spritesheetName={activeSheet.name}
+              terrainCategories={settings.terrainCategories}
               onUpdateSprite={handleUpdateSprite}
             />
           ) : (

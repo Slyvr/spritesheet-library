@@ -8,27 +8,36 @@ const DOT_LABELS = {
   bl: 'bot-left', bc: 'bot-center', br: 'bot-right',
 }
 
-export default function SpriteCollectionsView({ spriteData, spritesheetName, onUpdateSprite }) {
-  const [selectedTag, setSelectedTag] = useState(null)
+export default function TerrainCollectionsView({ spriteData, spritesheetName, terrainCategories, onUpdateSprite }) {
+  const [selectedCategory, setSelectedCategory] = useState(null)
 
-  // Collect unique tags from all sprites, sorted
-  const tagMap = useMemo(() => {
+  const groups = spriteData?.groups || []
+
+  // Count sprites and groups per terrain category
+  const categoryMap = useMemo(() => {
     const map = {}
-    for (const s of spriteData?.sprites || []) {
-      for (const t of s.tags || []) {
-        map[t] = (map[t] || 0) + 1
+    for (const cat of terrainCategories) {
+      const spriteCount = (spriteData?.sprites || []).filter(s => s.terrainCategory === cat).length
+      const groupCount = groups.filter(g => g.terrainCategory === cat).length
+      if (spriteCount > 0 || groupCount > 0) {
+        map[cat] = { spriteCount, groupCount }
       }
     }
-    return Object.fromEntries(Object.entries(map).sort((a, b) => a[0].localeCompare(b[0])))
-  }, [spriteData])
+    return map
+  }, [terrainCategories, spriteData, groups])
 
-  // Sprites that have the selected tag
+  // Filtered results
   const filteredSprites = useMemo(() => {
-    if (!selectedTag || !spriteData) return []
-    return spriteData.sprites.filter(s => (s.tags || []).includes(selectedTag))
-  }, [selectedTag, spriteData])
+    if (!selectedCategory || !spriteData) return []
+    return spriteData.sprites.filter(s => s.terrainCategory === selectedCategory)
+  }, [selectedCategory, spriteData])
 
-  const tags = Object.keys(tagMap)
+  const filteredGroups = useMemo(() => {
+    if (!selectedCategory) return []
+    return groups.filter(g => g.terrainCategory === selectedCategory)
+  }, [selectedCategory, groups])
+
+  const categories = Object.keys(categoryMap)
 
   const toggleConstraint = (sprite, dotPos) => {
     const constraints = sprite.constraints ? [...sprite.constraints] : []
@@ -46,22 +55,25 @@ export default function SpriteCollectionsView({ spriteData, spritesheetName, onU
 
   return (
     <div className="collections-view">
-      <div className="tag-list-panel">
-        <h2 className="panel-heading">Tags</h2>
-        <div className="tag-list">
-          {tags.length === 0 ? (
-            <div className="no-tags-msg">
-              No tags yet. Add tags to sprites in the spritesheet view.
+      <div className="category-list-panel">
+        <h2 className="panel-heading">Terrain Categories</h2>
+        <div className="category-list">
+          {categories.length === 0 ? (
+            <div className="no-categories-msg">
+              No terrain categories have been assigned yet. Set a Terrain Category on sprites or groups in the spritesheet view.
             </div>
           ) : (
-            tags.map(tag => (
+            categories.map(cat => (
               <div
-                key={tag}
-                className={`tag-list-item ${tag === selectedTag ? 'selected' : ''}`}
-                onClick={() => setSelectedTag(tag === selectedTag ? null : tag)}
+                key={cat}
+                className={`category-list-item ${cat === selectedCategory ? 'selected' : ''}`}
+                onClick={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
               >
-                <div className="tag-item-title">{tag}</div>
-                <div className="tag-item-meta">{tagMap[tag]} sprite{tagMap[tag] !== 1 ? 's' : ''}</div>
+                <div className="category-item-title">{cat}</div>
+                <div className="category-item-meta">
+                  {categoryMap[cat].spriteCount} sprite{categoryMap[cat].spriteCount !== 1 ? 's' : ''}
+                  {categoryMap[cat].groupCount > 0 && ` · ${categoryMap[cat].groupCount} group${categoryMap[cat].groupCount !== 1 ? 's' : ''}`}
+                </div>
               </div>
             ))
           )}
@@ -69,13 +81,19 @@ export default function SpriteCollectionsView({ spriteData, spritesheetName, onU
       </div>
 
       <div className="sprite-grid-panel">
-        {selectedTag ? (
+        {selectedCategory ? (
           <>
             <h2 className="panel-heading">
-              {selectedTag}
-              <span className="grid-subtitle">{filteredSprites.length} sprite{filteredSprites.length !== 1 ? 's' : ''}</span>
+              {selectedCategory}
+              <span className="grid-subtitle">
+                {filteredSprites.length} sprite{filteredSprites.length !== 1 ? 's' : ''}
+                {filteredGroups.length > 0 && ` · ${filteredGroups.length} group${filteredGroups.length !== 1 ? 's' : ''}`}
+              </span>
             </h2>
             <div className="sprite-grid">
+              {filteredGroups.map(group => (
+                <GroupCard key={group.id} group={group} spritesheetName={spritesheetName} />
+              ))}
               {filteredSprites.map(sprite => (
                 <SpriteCell
                   key={`${sprite.row}-${sprite.col}`}
@@ -91,8 +109,8 @@ export default function SpriteCollectionsView({ spriteData, spritesheetName, onU
             </div>
           </>
         ) : (
-          <div className="no-tag-selected">
-            <p>Select a tag from the list to view all sprites with that tag and configure edge constraints.</p>
+          <div className="no-category-selected">
+            <p>Select a terrain category from the list to view all sprites and groups assigned to it.</p>
           </div>
         )}
       </div>
@@ -103,7 +121,7 @@ export default function SpriteCollectionsView({ spriteData, spritesheetName, onU
 function SpriteCell({ cell, spritesheetName, onToggleDot, dotState }) {
   const SPRITE = 32
   const SCALE = 2.5
-  const CELL_SIZE = SPRITE * SCALE // 80px
+  const CELL_SIZE = SPRITE * SCALE
 
   return (
     <div className="sprite-cell">
@@ -129,6 +147,40 @@ function SpriteCell({ cell, spritesheetName, onToggleDot, dotState }) {
       <div className="sprite-cell-label">
         {cell.row},{cell.col}
       </div>
+    </div>
+  )
+}
+
+function GroupCard({ group, spritesheetName }) {
+  const cellCount = group.cells?.length || 0
+  const title = group.title || '(untitled)'
+  // Show first cell as preview
+  const first = group.cells?.[0]
+  const SPRITE = 32
+  const SCALE = 2.5
+  const CELL_SIZE = SPRITE * SCALE
+
+  return (
+    <div className="group-card">
+      <div className="group-card-preview">
+        {first ? (
+          <div className="sprite-image" style={{
+            width: CELL_SIZE,
+            height: CELL_SIZE,
+            backgroundImage: `url(/spritesheets/${spritesheetName})`,
+            backgroundPosition: `-${first.col * CELL_SIZE}px -${first.row * CELL_SIZE}px`,
+            backgroundSize: `${32 * CELL_SIZE}px ${32 * CELL_SIZE}px`,
+            imageRendering: 'pixelated',
+          }} />
+        ) : (
+          <div className="sprite-image" style={{ width: CELL_SIZE, height: CELL_SIZE, background: '#0d0d1f' }} />
+        )}
+      </div>
+      <div className="group-card-info">
+        <div className="group-card-title">{title}</div>
+        <div className="group-card-meta">{cellCount} cells</div>
+      </div>
+      <div className="group-card-badge">GROUP</div>
     </div>
   )
 }
