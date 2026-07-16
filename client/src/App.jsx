@@ -289,8 +289,9 @@ export default function App() {
                 title="Download all spritesheets as ZIP"
               >
                 <svg width="18" height="18" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M7 1v8M3 6l4 4 4-4" />
-                  </svg>
+                  <path d="M7 1v8M3 6l4 4 4-4" />
+                  <path d="M1 11v2h12v-2" />
+                </svg>
                 {sidebarOpen && <span>Download All</span>}
               </a>
             </>
