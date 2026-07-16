@@ -261,43 +261,41 @@ export default function App() {
       <div className="app-body">
         <div className={`sidebar ${sidebarOpen ? '' : 'collapsed'}`}>
           <div className="sidebar-upload-area">
-            {sidebarOpen && (
-              <>
-                <button
-                  className="sidebar-btn sidebar-upload-btn"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading}
-                  title="Upload spritesheet"
-                >
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 1v8M5 5l4-4 4 4" />
-                    <path d="M1 13v4h16v-4" />
-                  </svg>
-                  <span>{uploading ? 'Uploading...' : 'Upload'}</span>
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".png,.json"
-                  multiple
-                  style={{ display: 'none' }}
-                  onChange={handleUpload}
-                />
-                <a
-                  className="sidebar-btn sidebar-dlall-btn"
-                  href="/api/download/all"
-                  download
-                  title="Download all spritesheets as ZIP"
-                >
-                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M9 1v8M5 5l4-4 4 4" />
-                    <path d="M1 13v4h16v-4" />
-                    <rect x="2" y="13" width="14" height="1" />
-                  </svg>
-                  <span>Download All</span>
-                </a>
-              </>
-            )}
+            <>
+              <button
+                className="sidebar-btn sidebar-upload-btn"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                title="Upload spritesheet"
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 1v8M5 5l4-4 4 4" />
+                  <path d="M1 13v4h16v-4" />
+                </svg>
+                {sidebarOpen && <span>{uploading ? 'Uploading...' : 'Upload'}</span>}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".png,.json"
+                multiple
+                style={{ display: 'none' }}
+                onChange={handleUpload}
+              />
+              <a
+                className="sidebar-btn sidebar-dlall-btn"
+                href="/api/download/all"
+                download
+                title="Download all spritesheets as ZIP"
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 1v8M5 5l4-4 4 4" />
+                  <path d="M1 13v4h16v-4" />
+                  <rect x="2" y="13" width="14" height="1" />
+                </svg>
+                {sidebarOpen && <span>Download All</span>}
+              </a>
+            </>
           </div>
           <div className="sidebar-section-label">{sidebarOpen && 'Sheets'}</div>
           {sheetsList.map(sheet => {
