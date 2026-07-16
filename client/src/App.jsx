@@ -236,12 +236,24 @@ export default function App() {
           </button>
         </div>
 
-        {view === 'collections' ? (
-          <main className="app-main">
-            <div className="view-mode-tabs">
-              <button className={`view-tab ${view === 'collections' ? 'active' : ''}`} onClick={switchToCollections}>Terrain Collections</button>
-            </div>
-            {loading ? (
+        <main className="app-main">
+          <div className="view-mode-tabs">
+            <button
+              className={`view-tab ${mode === 'sprite' && view === 'spritesheet' ? 'active' : ''}`}
+              onClick={() => { setMode('sprite'); setSelectedGroupId(null); setView('spritesheet') }}
+            >Sprite</button>
+            <button
+              className={`view-tab ${mode === 'group' && view === 'spritesheet' ? 'active' : ''}`}
+              onClick={() => { setMode('group'); setSelectedSprite(null); setView('spritesheet') }}
+            >Group</button>
+            <button
+              className={`view-tab collections-tab ${view === 'collections' ? 'active' : ''}`}
+              onClick={switchToCollections}
+            >Terrain Collections</button>
+          </div>
+
+          {view === 'collections' ? (
+            loading ? (
               <div className="loading">Loading sprite data...</div>
             ) : spriteData ? (
               <SpriteCollectionsView
@@ -252,21 +264,8 @@ export default function App() {
               />
             ) : (
               <div className="loading">Failed to load sprite data</div>
-            )}
-          </main>
-        ) : (
-          <main className="app-main">
-            <div className="view-mode-tabs">
-              <button
-                className={`view-tab ${mode === 'sprite' ? 'active' : ''}`}
-                onClick={() => { setMode('sprite'); setSelectedGroupId(null) }}
-              >Sprite</button>
-              <button
-                className={`view-tab ${mode === 'group' ? 'active' : ''}`}
-                onClick={() => { setMode('group'); setSelectedSprite(null) }}
-              >Group</button>
-              <button className={`view-tab collections-tab ${view === 'collections' ? 'active' : ''}`} onClick={switchToCollections}>Terrain Collections</button>
-            </div>
+            )
+          ) : (
             <div className="viewer-content">
               <div className="viewer-panel">
               {loading ? (
@@ -317,8 +316,8 @@ export default function App() {
               )}
             </aside>
             </div>
-          </main>
-        )}
+          )}
+        </main>
       </div>
 
       {settingsOpen && (
