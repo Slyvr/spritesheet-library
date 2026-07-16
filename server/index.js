@@ -15,8 +15,23 @@ app.use(express.json());
 
 // ── IP extraction middleware ──
 app.use((req, _res, next) => {
-  req.clientIp = db.normaliseIp(req.ip || req.socket.remoteAddress || 'unknown');
+  // Prefer CF-Connecting-IP (Cloudflare Tunnel sends the real visitor IP here)
+  const rawIp = req.headers['cf-connecting-ip'] || req.ip || req.socket.remoteAddress || 'unknown';
+  req.clientIp = db.normaliseIp(rawIp);
   next();
+});
+
+// ── Debug: show what IP we see ──
+app.get('/api/debug-ip', (req, res) => {
+  res.json({
+    ip: req.ip,
+    clientIp: req.clientIp,
+    headers: {
+      'x-forwarded-for': req.headers['x-forwarded-for'],
+      'x-real-ip': req.headers['x-real-ip'],
+      'cf-connecting-ip': req.headers['cf-connecting-ip'],
+    }
+  });
 });
 
 // ── Upload limits ──
@@ -58,6 +73,7 @@ app.get('/api/sprite-data/:sheetName', (req, res) => {
     }
 
     const data = db.loadSpriteDataSafe(ip, sheetName);
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.json(data);
   } catch (err) {
     console.error('Error loading sprite data:', err);
@@ -157,6 +173,7 @@ app.delete('/api/spritesheets/:sheetName', (req, res) => {
 app.get('/api/spritesheets', (req, res) => {
   try {
     const ip = req.clientIp;
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.json(db.listSpritesheets(ip));
   } catch (err) {
     console.error('Error listing spritesheets:', err);
