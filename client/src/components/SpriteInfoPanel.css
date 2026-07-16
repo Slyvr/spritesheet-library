@@ -90,7 +90,8 @@
 }
 
 .field-group input,
-.field-group textarea {
+.field-group textarea,
+.field-group select {
   background: #16213e;
   border: 1px solid #0f3460;
   color: #e0e0e0;
@@ -103,8 +104,14 @@
   resize: vertical;
 }
 
+.field-group select {
+  cursor: pointer;
+  appearance: auto;
+}
+
 .field-group input:focus,
-.field-group textarea:focus {
+.field-group textarea:focus,
+.field-group select:focus {
   border-color: #e94560;
 }
 

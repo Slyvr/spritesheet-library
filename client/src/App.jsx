@@ -280,6 +280,7 @@ export default function App() {
                 key={`group-${selectedGroup.id}`}
                 group={selectedGroup}
                 spritesheetName={activeSheet.name}
+                terrainCategories={settings.terrainCategories}
                 onUpdateGroup={handleUpdateGroup}
                 onDeleteGroup={handleDeleteGroup}
               />
@@ -288,6 +289,7 @@ export default function App() {
                 key={`sprite-${selectedSprite.row}-${selectedSprite.col}`}
                 sprite={selectedSprite}
                 spritesheetName={activeSheet.name}
+                terrainCategories={settings.terrainCategories}
                 onUpdate={handleUpdateSprite}
               />
             ) : (

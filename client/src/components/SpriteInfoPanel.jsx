@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import './SpriteInfoPanel.css'
 
-export default function SpriteInfoPanel({ sprite, group, spritesheetName, onUpdate, onUpdateGroup, onDeleteGroup }) {
+export default function SpriteInfoPanel({ sprite, group, spritesheetName, terrainCategories, onUpdate, onUpdateGroup, onDeleteGroup }) {
   if (group) {
-    return <GroupEditor group={group} spritesheetName={spritesheetName} onUpdateGroup={onUpdateGroup} onDeleteGroup={onDeleteGroup} />
+    return <GroupEditor group={group} spritesheetName={spritesheetName} terrainCategories={terrainCategories} onUpdateGroup={onUpdateGroup} onDeleteGroup={onDeleteGroup} />
   }
-  return <SpriteEditor sprite={sprite} spritesheetName={spritesheetName} onUpdate={onUpdate} />
+  return <SpriteEditor sprite={sprite} spritesheetName={spritesheetName} terrainCategories={terrainCategories} onUpdate={onUpdate} />
 }
 
-function SpriteEditor({ sprite, spritesheetName, onUpdate }) {
+function SpriteEditor({ sprite, spritesheetName, terrainCategories = [], onUpdate }) {
   const [title, setTitle] = useState(sprite.title || '')
   const [description, setDescription] = useState(sprite.description || '')
   const [terrainCategory, setTerrainCategory] = useState(sprite.terrainCategory || '')
@@ -137,7 +137,12 @@ function SpriteEditor({ sprite, spritesheetName, onUpdate }) {
         </div>
         <div className="field-group">
           <label htmlFor="sprite-terrain">Terrain Category</label>
-          <input id="sprite-terrain" type="text" value={terrainCategory} onChange={handleTerrainCategoryChange} placeholder="e.g. grass, desert, water..." />
+          <select id="sprite-terrain" value={terrainCategory} onChange={handleTerrainCategoryChange}>
+            <option value="">—</option>
+            {terrainCategories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
         </div>
         <div className="field-group">
           <label htmlFor="sprite-collection">Collection Name</label>
@@ -149,7 +154,7 @@ function SpriteEditor({ sprite, spritesheetName, onUpdate }) {
   )
 }
 
-function GroupEditor({ group, spritesheetName, onUpdateGroup, onDeleteGroup }) {
+function GroupEditor({ group, spritesheetName, terrainCategories = [], onUpdateGroup, onDeleteGroup }) {
   const [title, setTitle] = useState(group.title || '')
   const [description, setDescription] = useState(group.description || '')
   const [terrainCategory, setTerrainCategory] = useState(group.terrainCategory || '')
@@ -266,7 +271,12 @@ function GroupEditor({ group, spritesheetName, onUpdateGroup, onDeleteGroup }) {
         </div>
         <div className="field-group">
           <label htmlFor="group-terrain">Terrain Category</label>
-          <input id="group-terrain" type="text" value={terrainCategory} onChange={handleTerrainCategoryChange} placeholder="e.g. grass, desert, water..." />
+          <select id="group-terrain" value={terrainCategory} onChange={handleTerrainCategoryChange}>
+            <option value="">—</option>
+            {terrainCategories.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
         </div>
         <div className="field-group">
           <label htmlFor="group-collection">Collection Name</label>
