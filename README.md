@@ -115,7 +115,9 @@ All endpoints return JSON. Upload uses `multipart/form-data`. ZIP downloads use 
 
 ## Data Storage
 
-Previously file-based JSON, now using **SQLite** (`server/data.db`). Two tables:
+Data is stored in **SQLite** at `server/data.db` (gitignored). A schema-only starter database is available at `server/data.example.db` — copy it to `server/data.db` for a clean start if needed.
+
+Two tables:
 
 ```sql
 sprite_data(ip, sheet_name, data, updated_at)
