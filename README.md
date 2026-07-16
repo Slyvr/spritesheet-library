@@ -10,7 +10,6 @@ A web-based tool for extracting, annotating, and organizing individual sprites f
 # Start the backend
 cd server && node index.js
 
-# Frontend is served via NGINX, backend API runs on port 3011
 # Open http://localhost:3005
 ```
 
@@ -92,20 +91,19 @@ All endpoints return JSON. Upload uses `multipart/form-data`. ZIP downloads use 
 ```
 ┌──────────┐     ┌──────────┐     ┌─────────────────┐
 │  NGINX   │────▶│  React   │     │  Node.js        │
-│  :3005   │     │  (Vite)  │     │  Express         │
-│          │     │  build/  │     │  :3011           │
-│  /api/*  │────▶│          │────▶│  server/         │
-│  → :3011 │     │          │     │  ├─ index.js     │
-│          │     │          │     │  ├─ db.js        │
-│  X-Real- │     │          │     │  └─ data.db      │
-│  IP /    │     │          │     │     (SQLite)     │
-│  X-For-  │     │          │     │                  │
-│  warded- │     │          │     │  public/         │
-│  For     │     │          │     │  spritesheets/   │
+│          │     │  (Vite)  │     │  Express         │
+│          │     │  build/  │     │  server/         │
+│  /api/*  │────▶│          │────▶│  ├─ index.js     │
+│  → bknd │     │          │     │  ├─ db.js        │
+│          │     │          │     │  └─ data.db      │
+│  X-Real- │     │          │     │     (SQLite)     │
+│  IP /    │     │          │     │                  │
+│  X-For-  │     │          │     │  public/         │
+│  warded- │     │          │     │  spritesheets/   │
+│  For     │     │          │     │                  │
 └──────────┘     └──────────┘     └─────────────────┘
 ```
-
-- **NGINX** serves the built React app, proxies `/api/` to the backend, forwards the real client IP via `X-Forwarded-For`, and enforces a 3 MB `client_max_body_size` on uploads. NGINX returns JSON for 413 errors instead of HTML.
+- **NGINX** serves the built React app, proxies `/api/` to the backend, forwards the real client IP via `X-Forwarded-For`, and enforces a maximum body size on uploads with a JSON error response for oversized requests.
 - **React (Vite)** handles all UI — canvas, state management, auto-save, group selection, settings.
 - **Node.js (Express)** provides a REST API backed by **SQLite** (`node:sqlite`). Data is stored per-IP in two tables: `sprite_data` (JSON metadata blobs) and `uploaded_pngs` (PNG BLOBs).
 
