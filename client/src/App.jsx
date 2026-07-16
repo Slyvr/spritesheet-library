@@ -155,6 +155,7 @@ export default function App() {
   // ── Group operations ──
 
   const syncGroups = useCallback(async (groups) => {
+    if (!activeSheet) return
     try {
       await fetch(`/api/groups/${activeSheet.name}`, {
         method: 'PUT',
@@ -164,7 +165,7 @@ export default function App() {
     } catch (err) {
       console.error('Group save failed:', err)
     }
-  }, [activeSheet.name])
+  }, [activeSheet])
 
   const handleCreateGroup = (cells) => {
     if (!cells || cells.length < 2) return
