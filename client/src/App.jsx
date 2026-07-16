@@ -3,7 +3,7 @@ import SpriteSheetViewer from './components/SpriteSheetViewer'
 import SpriteInfoPanel from './components/SpriteInfoPanel'
 import SpriteCollectionsView from './components/SpriteCollectionsView'
 import CollectionView from './components/CollectionView'
-import SettingsPanel from './components/SettingsPanel'
+import SheetSettings from './components/SheetSettings'
 import './App.css'
 
 const FALLBACK_SHEET = { name: 'base_out_atlas.png', label: 'Base Out Atlas' }
@@ -21,8 +21,6 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [uploading, setUploading] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [settings, setSettings] = useState({ terrainCategories: [], collectionNames: [] })
   const [selectedCollectionSprite, setSelectedCollectionSprite] = useState(null)
   const fileInputRef = useRef(null)
 
@@ -48,18 +46,6 @@ export default function App() {
   useEffect(() => {
     loadSpriteData(activeSheet)
   }, [activeSheet, loadSpriteData])
-
-  // Load settings
-  useEffect(() => {
-    fetch('/api/settings')
-      .then(r => r.json())
-      .then(data => {
-        if (data.terrainCategories || data.collectionNames) {
-          setSettings(data)
-        }
-      })
-      .catch(err => console.error('Error loading settings:', err))
-  }, [])
 
   // Load spritesheets list
   useEffect(() => {
@@ -222,16 +208,18 @@ export default function App() {
     setSelectedSprite(null)
   }
 
-  const handleSaveSettings = async (next) => {
-    setSettings(next)
+  const handleSaveSheetSettings = async (next) => {
+    if (!activeSheet) return
+    // Update spriteData in place so dropdowns reflect changes immediately
+    setSpriteData(prev => prev ? { ...prev, ...next } : prev)
     try {
-      await fetch('/api/settings', {
+      await fetch(`/api/sprite-settings/${activeSheet.name}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(next),
       })
     } catch (err) {
-      console.error('Settings save failed:', err)
+      console.error('Sheet settings save failed:', err)
     }
   }
 
@@ -255,6 +243,10 @@ export default function App() {
     setSelectedSprite(null)
     setSelectedCollectionSprite(null)
     setView('collection_view')
+  }
+
+  const switchToSettings = () => {
+    setView('settings')
   }
 
   return (
@@ -346,19 +338,6 @@ export default function App() {
           })}
 
           <div className="sidebar-spacer" />
-
-          <div className="sidebar-section-label">{sidebarOpen && 'Tools'}</div>
-          <button
-            className="sidebar-btn"
-            onClick={() => setSettingsOpen(true)}
-            title={sidebarOpen ? '' : 'Settings'}
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-              <circle cx="9" cy="9" r="3" />
-              <path d="M9 2v2M9 14v2M2 9h2M14 9h2M3.5 3.5l1.5 1.5M13 13l1.5 1.5M3.5 14.5l1.5-1.5M13 5l1.5-1.5" />
-            </svg>
-            {sidebarOpen && <span>Settings</span>}
-          </button>
         </div>
 
         <main className="app-main">
@@ -379,16 +358,32 @@ export default function App() {
               className={`view-tab ${view === 'collection_view' ? 'active' : ''}`}
               onClick={switchToCollectionView}
             >Collections</button>
+            <button
+              className={`view-tab settings-tab ${view === 'settings' ? 'active' : ''}`}
+              onClick={switchToSettings}
+            >Settings</button>
           </div>
 
-          {view === 'terrain' ? (
+          {view === 'settings' ? (
+            loading ? (
+              <div className="loading">Loading sprite data...</div>
+            ) : spriteData ? (
+              <SheetSettings
+                terrainCategories={spriteData.terrainCategories || []}
+                collectionNames={spriteData.collectionNames || []}
+                onSave={handleSaveSheetSettings}
+              />
+            ) : (
+              <div className="loading">Failed to load sprite data</div>
+            )
+          ) : view === 'terrain' ? (
             loading ? (
               <div className="loading">Loading sprite data...</div>
             ) : spriteData ? (
               <SpriteCollectionsView
                 spriteData={spriteData}
                 spritesheetName={activeSheet.name}
-                terrainCategories={settings.terrainCategories}
+                terrainCategories={spriteData?.terrainCategories || []}
                 onUpdateSprite={handleUpdateSprite}
               />
             ) : (
@@ -403,7 +398,7 @@ export default function App() {
                 <CollectionView
                   spriteData={spriteData}
                   spritesheetName={activeSheet.name}
-                  collectionNames={settings.collectionNames}
+                  collectionNames={spriteData?.collectionNames || []}
                   onUpdateSprite={handleUpdateSprite}
                   onSelectSprite={(sprite) => setSelectedCollectionSprite(sprite)}
                 />
@@ -417,8 +412,8 @@ export default function App() {
                   key={`coll-sprite-${selectedCollectionSprite.row}-${selectedCollectionSprite.col}`}
                   sprite={selectedCollectionSprite}
                   spritesheetName={activeSheet.name}
-                  terrainCategories={settings.terrainCategories}
-                  collectionNames={settings.collectionNames}
+                  terrainCategories={spriteData?.terrainCategories || []}
+                  collectionNames={spriteData?.collectionNames || []}
                   onUpdate={handleUpdateSprite}
                 />
               ) : (
@@ -454,8 +449,8 @@ export default function App() {
                   key={`group-${selectedGroup.id}`}
                   group={selectedGroup}
                   spritesheetName={activeSheet.name}
-                  terrainCategories={settings.terrainCategories}
-                  collectionNames={settings.collectionNames}
+                  terrainCategories={spriteData?.terrainCategories || []}
+                  collectionNames={spriteData?.collectionNames || []}
                   onUpdateGroup={handleUpdateGroup}
                   onDeleteGroup={handleDeleteGroup}
                 />
@@ -464,8 +459,8 @@ export default function App() {
                   key={`sprite-${selectedSprite.row}-${selectedSprite.col}`}
                   sprite={selectedSprite}
                   spritesheetName={activeSheet.name}
-                  terrainCategories={settings.terrainCategories}
-                  collectionNames={settings.collectionNames}
+                  terrainCategories={spriteData?.terrainCategories || []}
+                  collectionNames={spriteData?.collectionNames || []}
                   onUpdate={handleUpdateSprite}
                 />
               ) : (
@@ -483,13 +478,6 @@ export default function App() {
         </main>
       </div>
 
-      {settingsOpen && (
-        <SettingsPanel
-          settings={settings}
-          onSave={handleSaveSettings}
-          onClose={() => setSettingsOpen(false)}
-        />
-      )}
     </div>
   )
 }

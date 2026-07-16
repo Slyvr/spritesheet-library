@@ -1,74 +1,25 @@
-.settings-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.sheet-settings {
+  padding: 24px 32px;
+  max-width: 520px;
+  margin: 0 auto;
 }
 
-.settings-panel {
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
-  border-radius: 8px;
-  width: 480px;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-}
-
-.settings-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid #0f3460;
-}
-
-.settings-header h2 {
-  font-size: 17px;
-  font-weight: 600;
-  color: #e0e0e0;
-  margin: 0;
-}
-
-.settings-close {
-  background: transparent;
-  border: none;
-  color: #888;
-  font-size: 22px;
-  cursor: pointer;
-  padding: 0 4px;
-  line-height: 1;
-  transition: color 0.12s;
-}
-
-.settings-close:hover {
-  color: #e94560;
-}
-
-.settings-section {
-  padding: 16px 20px;
-}
-
-.settings-section-title {
-  font-size: 13px;
+.sheet-settings-title {
+  font-size: 15px;
   font-weight: 600;
   color: #888;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin: 0 0 12px;
+  margin: 0 0 16px;
 }
 
-.settings-tabs {
+.sheet-settings-tabs {
   display: flex;
   gap: 2px;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
-.settings-tab {
+.sheet-settings-tab {
   flex: 1;
   background: transparent;
   border: 1px solid #0f3460;
@@ -81,29 +32,29 @@
   transition: all 0.12s;
 }
 
-.settings-tab:hover {
+.sheet-settings-tab:hover {
   background: #0f3460;
   color: #e0e0e0;
 }
 
-.settings-tab.active {
+.sheet-settings-tab.active {
   background: #e94560;
   color: #fff;
   border-color: #e94560;
 }
 
-.settings-tab-content {
+.sheet-settings-content {
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-.settings-add-row {
+.ss-add-row {
   display: flex;
   gap: 8px;
 }
 
-.settings-add-input {
+.ss-add-input {
   flex: 1;
   background: #16213e;
   border: 1px solid #0f3460;
@@ -116,15 +67,15 @@
   transition: border-color 0.15s;
 }
 
-.settings-add-input:focus {
+.ss-add-input:focus {
   border-color: #e94560;
 }
 
-.settings-add-input::placeholder {
+.ss-add-input::placeholder {
   color: #555;
 }
 
-.settings-add-btn {
+.ss-add-btn {
   background: #0f3460;
   border: 1px solid #0f3460;
   color: #b0c4de;
@@ -137,21 +88,21 @@
   transition: all 0.12s;
 }
 
-.settings-add-btn:hover {
+.ss-add-btn:hover {
   background: #e94560;
   color: #fff;
   border-color: #e94560;
 }
 
-.settings-list {
+.ss-list {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 240px;
+  max-height: 320px;
   overflow-y: auto;
 }
 
-.settings-list-item {
+.ss-list-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -161,12 +112,12 @@
   padding: 8px 10px;
 }
 
-.settings-item-label {
+.ss-item-label {
   font-size: 13px;
   color: #e0e0e0;
 }
 
-.settings-item-delete {
+.ss-item-delete {
   background: transparent;
   border: none;
   color: #888;
@@ -177,18 +128,18 @@
   transition: color 0.12s;
 }
 
-.settings-item-delete:hover {
+.ss-item-delete:hover {
   color: #e94560;
 }
 
-.settings-empty {
+.ss-empty {
   color: #555;
   font-size: 13px;
   text-align: center;
   padding: 24px 0;
 }
 
-.settings-saving {
+.ss-saving {
   font-size: 11px;
   color: #ffc107;
   text-align: right;

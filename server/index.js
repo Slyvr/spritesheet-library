@@ -73,6 +73,8 @@ function loadSpriteData(sheetName) {
     rows: ROWS,
     sprites,
     groups: [],
+    terrainCategories: [],
+    collectionNames: [],
   };
 
   // Write the default data
@@ -81,12 +83,20 @@ function loadSpriteData(sheetName) {
 }
 
 /**
- * Load sprite data, ensuring groups field exists on existing files.
+ * Ensure data file has all expected fields (migration-safe).
  */
-function loadSpriteDataWithGroups(sheetName) {
-  const data = loadSpriteData(sheetName);
+function ensureFields(data) {
   if (!data.groups) data.groups = [];
+  if (!data.terrainCategories) data.terrainCategories = [];
+  if (!data.collectionNames) data.collectionNames = [];
   return data;
+}
+
+/**
+ * Load sprite data, ensuring all expected fields exist.
+ */
+function loadSpriteDataSafe(sheetName) {
+  return ensureFields(loadSpriteData(sheetName));
 }
 
 /**
@@ -107,7 +117,7 @@ app.get('/api/sprite-data/:sheetName', (req, res) => {
       return res.status(404).json({ error: 'Spritesheet not found' });
     }
 
-    const data = loadSpriteDataWithGroups(sheetName);
+    const data = loadSpriteDataSafe(sheetName);
     res.json(data);
   } catch (err) {
     console.error('Error loading sprite data:', err);
@@ -152,7 +162,7 @@ app.put('/api/groups/:sheetName', (req, res) => {
     if (!Array.isArray(groups)) {
       return res.status(400).json({ error: 'groups must be an array' });
     }
-    const data = loadSpriteDataWithGroups(sheetName);
+    const data = loadSpriteDataSafe(sheetName);
     data.groups = groups;
     saveSpriteData(sheetName, data);
     res.json({ success: true });
@@ -166,7 +176,7 @@ app.put('/api/groups/:sheetName', (req, res) => {
 app.delete('/api/groups/:sheetName/:groupId', (req, res) => {
   try {
     const { sheetName, groupId } = req.params;
-    const data = loadSpriteDataWithGroups(sheetName);
+    const data = loadSpriteDataSafe(sheetName);
     data.groups = data.groups.filter(g => g.id !== groupId);
     saveSpriteData(sheetName, data);
     res.json({ success: true });
@@ -264,6 +274,8 @@ app.post('/api/upload', upload.fields([
         rows: ROWS,
         sprites,
         groups: [],
+        terrainCategories: [],
+        collectionNames: [],
       };
       fs.writeFileSync(jsonDest, JSON.stringify(data, null, 2), 'utf-8');
     }
@@ -281,43 +293,26 @@ app.post('/api/upload', upload.fields([
   }
 });
 
-// ── Settings ──
+// ── Per-sheet settings ──
 
-const SETTINGS_PATH = path.join(DATA_DIR, 'settings.json');
-
-function loadSettings() {
-  if (fs.existsSync(SETTINGS_PATH)) {
-    return JSON.parse(fs.readFileSync(SETTINGS_PATH, 'utf-8'));
-  }
-  const defaults = { terrainCategories: [], collectionNames: [] };
-  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(defaults, null, 2), 'utf-8');
-  return defaults;
-}
-
-function saveSettings(settings) {
-  fs.writeFileSync(SETTINGS_PATH, JSON.stringify(settings, null, 2), 'utf-8');
-}
-
-app.get('/api/settings', (req, res) => {
+// PUT /api/sprite-settings/:sheetName - Save terrain categories and collection names
+app.put('/api/sprite-settings/:sheetName', (req, res) => {
   try {
-    res.json(loadSettings());
-  } catch (err) {
-    console.error('Error loading settings:', err);
-    res.status(500).json({ error: 'Failed to load settings' });
-  }
-});
+    const { sheetName } = req.params;
+    const { terrainCategories, collectionNames } = req.body;
 
-app.put('/api/settings', (req, res) => {
-  try {
-    const settings = req.body;
-    if (!settings || typeof settings !== 'object') {
-      return res.status(400).json({ error: 'Invalid settings object' });
+    if (!Array.isArray(terrainCategories) || !Array.isArray(collectionNames)) {
+      return res.status(400).json({ error: 'terrainCategories and collectionNames must be arrays' });
     }
-    saveSettings(settings);
+
+    const data = loadSpriteDataSafe(sheetName);
+    data.terrainCategories = terrainCategories;
+    data.collectionNames = collectionNames;
+    saveSpriteData(sheetName, data);
     res.json({ success: true });
   } catch (err) {
-    console.error('Error saving settings:', err);
-    res.status(500).json({ error: 'Failed to save settings' });
+    console.error('Error saving sprite settings:', err);
+    res.status(500).json({ error: 'Failed to save sprite settings' });
   }
 });
 
@@ -351,7 +346,7 @@ app.get('/api/download/json/:sheetName', (req, res) => {
       return res.status(404).json({ error: 'Spritesheet not found' });
     }
 
-    const data = loadSpriteDataWithGroups(sheetName);
+    const data = loadSpriteDataSafe(sheetName);
     const jsonName = sheetName.replace(/\.png$/i, '') + '.json';
     res.setHeader('Content-Disposition', `attachment; filename="${jsonName}"`);
     res.json(data);

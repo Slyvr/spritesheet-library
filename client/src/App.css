@@ -243,6 +243,12 @@
   background: #16213e;
 }
 
+.view-tab.settings-tab.active {
+  color: #ffc107;
+  border-color: #665500;
+  background: #16213e;
+}
+
 .viewer-content {
   display: flex;
   flex: 1;
