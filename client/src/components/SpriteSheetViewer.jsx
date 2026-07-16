@@ -15,6 +15,17 @@ const GROUP_COLORS = [
   'rgba(233, 30, 99, 0.30)',
 ]
 
+const GROUP_BORDER_COLORS = [
+  'rgba(140, 41, 58, 0.80)',
+  'rgba(46, 105, 48, 0.80)',
+  'rgba(20, 90, 146, 0.80)',
+  'rgba(153, 116, 4, 0.80)',
+  'rgba(94, 23, 106, 0.80)',
+  'rgba(153, 52, 20, 0.80)',
+  'rgba(0, 113, 127, 0.80)',
+  'rgba(140, 18, 59, 0.80)',
+]
+
 export default function SpriteSheetViewer({
   spritesheetUrl,
   spriteData,
@@ -82,6 +93,19 @@ export default function SpriteSheetViewer({
             SPRITE_SIZE * scale
           )
         }
+        // Solid border around the group's bounding box
+        const minRow = Math.min(...group.cells.map(c => c.row))
+        const maxRow = Math.max(...group.cells.map(c => c.row))
+        const minCol = Math.min(...group.cells.map(c => c.col))
+        const maxCol = Math.max(...group.cells.map(c => c.col))
+        ctx.strokeStyle = GROUP_BORDER_COLORS[gi % GROUP_BORDER_COLORS.length]
+        ctx.lineWidth = 2
+        ctx.strokeRect(
+          minCol * SPRITE_SIZE * scale,
+          minRow * SPRITE_SIZE * scale,
+          (maxCol - minCol + 1) * SPRITE_SIZE * scale,
+          (maxRow - minRow + 1) * SPRITE_SIZE * scale
+        )
       })
     }
 
