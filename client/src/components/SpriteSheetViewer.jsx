@@ -69,8 +69,8 @@ export default function SpriteSheetViewer({
     ctx.drawImage(img, 0, 0, img.width * scale, img.height * scale)
 
     // Draw group color overlays (hide in sprite mode)
+    const groups = spriteData.groups || []
     if (mode !== 'sprite') {
-      const groups = spriteData.groups || []
       groups.forEach((group, gi) => {
         const color = GROUP_COLORS[gi % GROUP_COLORS.length]
         ctx.fillStyle = color
