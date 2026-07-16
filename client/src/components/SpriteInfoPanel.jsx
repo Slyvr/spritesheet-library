@@ -311,7 +311,7 @@ function SpritePreview({ sprite, spritesheetName }) {
           width: 96, height: 96,
           backgroundImage: `url(/spritesheets/${spritesheetName})`,
           backgroundPosition: `-${sprite.col * 96}px -${sprite.row * 96}px`,
-          backgroundSize: `${(32 * 96) / 32}px ${(32 * 96) / 32}px`,
+          backgroundSize: `${32 * 96}px ${32 * 96}px`,
           imageRendering: 'pixelated',
         }} />
       </div>
