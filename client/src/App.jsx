@@ -212,20 +212,51 @@ export default function App() {
           <div className="sidebar-section-label">{sidebarOpen && 'Sheets'}</div>
           {SPRITESHEETS.map(sheet => {
             return (
-            <button
-              key={sheet.name}
-              className={`sidebar-btn ${activeSheet.name === sheet.name ? 'active' : ''}`}
-              onClick={() => switchToSpritesheet(sheet)}
-              title={sidebarOpen ? '' : sheet.label}
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="2" width="6" height="6" />
-                <rect x="10" y="2" width="6" height="6" />
-                <rect x="2" y="10" width="6" height="6" />
-                <rect x="10" y="10" width="6" height="6" />
-              </svg>
-              {sidebarOpen && <span>{sheet.label}</span>}
-            </button>
+            <div key={sheet.name} className="sidebar-sheet-row">
+              <button
+                className={`sidebar-btn ${activeSheet.name === sheet.name ? 'active' : ''}`}
+                onClick={() => switchToSpritesheet(sheet)}
+                title={sidebarOpen ? '' : sheet.label}
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="2" width="6" height="6" />
+                  <rect x="10" y="2" width="6" height="6" />
+                  <rect x="2" y="10" width="6" height="6" />
+                  <rect x="10" y="10" width="6" height="6" />
+                </svg>
+                {sidebarOpen && <span className="sidebar-sheet-label">{sheet.label}</span>}
+              </button>
+              {sidebarOpen && (
+                <div className="sidebar-dl-group">
+                  <a
+                    className="sidebar-dl-btn"
+                    href={`/api/download/png/${sheet.name}`}
+                    download
+                    title="Download PNG spritesheet"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M7 1v8M3 6l4 4 4-4" />
+                      <path d="M1 11v2h12v-2" />
+                    </svg>
+                  </a>
+                  <a
+                    className="sidebar-dl-btn"
+                    href={`/api/download/json/${sheet.name}`}
+                    download
+                    title="Download JSON data"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 1v12M11 1v12M3 1L11 1" />
+                      <path d="M5 4h4" />
+                      <path d="M5 7h4" />
+                      <path d="M5 10h4" />
+                    </svg>
+                  </a>
+                </div>
+              )}
+            </div>
             );
           })}
 

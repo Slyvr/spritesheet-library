@@ -197,6 +197,46 @@ app.put('/api/settings', (req, res) => {
   }
 });
 
+// ── Download endpoints ──
+
+// Download spritesheet PNG
+app.get('/api/download/png/:sheetName', (req, res) => {
+  try {
+    const { sheetName } = req.params;
+    const imgPath = path.join(SPRITESHEETS_DIR, sheetName);
+
+    if (!fs.existsSync(imgPath)) {
+      return res.status(404).json({ error: 'Spritesheet not found' });
+    }
+
+    const safeName = sheetName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    res.download(imgPath, safeName);
+  } catch (err) {
+    console.error('Error downloading spritesheet:', err);
+    res.status(500).json({ error: 'Download failed' });
+  }
+});
+
+// Download sprite data JSON
+app.get('/api/download/json/:sheetName', (req, res) => {
+  try {
+    const { sheetName } = req.params;
+    const imgPath = path.join(SPRITESHEETS_DIR, sheetName);
+
+    if (!fs.existsSync(imgPath)) {
+      return res.status(404).json({ error: 'Spritesheet not found' });
+    }
+
+    const data = loadSpriteDataWithGroups(sheetName);
+    const jsonName = sheetName.replace(/\.png$/i, '') + '.json';
+    res.setHeader('Content-Disposition', `attachment; filename="${jsonName}"`);
+    res.json(data);
+  } catch (err) {
+    console.error('Error downloading sprite data:', err);
+    res.status(500).json({ error: 'Download failed' });
+  }
+});
+
 // Serve static spritesheets
 app.use('/spritesheets', express.static(SPRITESHEETS_DIR));
 

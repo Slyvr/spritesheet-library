@@ -123,6 +123,48 @@
   flex-shrink: 0;
 }
 
+/* ─── Sheet row with download buttons ─── */
+
+.sidebar-sheet-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sidebar-sheet-row .sidebar-btn {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-sheet-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-dl-group {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.sidebar-dl-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 28px;
+  border-radius: 4px;
+  color: #666;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.12s;
+}
+
+.sidebar-dl-btn:hover {
+  color: #e0e0e0;
+  background: #0f3460;
+}
+
 .sidebar-spacer {
   flex: 1;
   min-height: 8px;
