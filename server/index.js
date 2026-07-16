@@ -73,8 +73,10 @@ app.get('/api/sprite-data/:sheetName', (req, res) => {
     }
 
     const data = db.loadSpriteDataSafe(ip, sheetName);
+    const body = JSON.stringify(data);
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.json(data);
+    res.set('Content-Type', 'application/json');
+    res.end(body);
   } catch (err) {
     console.error('Error loading sprite data:', err);
     res.status(500).json({ error: 'Failed to load sprite data' });
