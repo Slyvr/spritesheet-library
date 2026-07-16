@@ -10,7 +10,7 @@ const SPRITESHEETS = [
   { name: 'terrain_atlas.png', label: 'Terrain Atlas' },
 ]
 
-// No longer used — new groups use crypto.randomUUID()
+// Group IDs use timestamp + random for universal browser compatibility
 
 export default function App() {
   const [activeSheet, setActiveSheet] = useState(SPRITESHEETS[0])
@@ -124,7 +124,7 @@ export default function App() {
   const handleCreateGroup = (cells) => {
     if (!cells || cells.length < 2) return
     const newGroup = {
-      id: `g${crypto.randomUUID().slice(0, 8)}`,
+      id: `g${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
       cells: cells.map(({ row, col }) => ({ row, col })),
       title: '',
       description: '',
