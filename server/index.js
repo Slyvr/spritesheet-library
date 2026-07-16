@@ -21,18 +21,6 @@ app.use((req, _res, next) => {
   next();
 });
 
-// ── Debug: show what IP we see ──
-app.get('/api/debug-ip', (req, res) => {
-  res.json({
-    ip: req.ip,
-    clientIp: req.clientIp,
-    headers: {
-      'x-forwarded-for': req.headers['x-forwarded-for'],
-      'x-real-ip': req.headers['x-real-ip'],
-      'cf-connecting-ip': req.headers['cf-connecting-ip'],
-    }
-  });
-});
 
 // ── Upload limits ──
 const MAX_FILE_SIZE = 2 * 1024 * 1024;      // 2 MB per file
@@ -73,7 +61,6 @@ app.get('/api/sprite-data/:sheetName', (req, res) => {
     }
 
     const data = db.loadSpriteDataSafe(ip, sheetName);
-    console.log(`[sprite-data] ip=${ip} sheet=${sheetName} groups=${data.groups?.length} cats=${JSON.stringify(data.terrainCategories)} cols=${JSON.stringify(data.collectionNames)}`);
     const body = JSON.stringify(data);
     res.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
     res.set('CDN-Cache-Control', 'no-cache');
