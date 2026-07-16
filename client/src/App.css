@@ -132,44 +132,57 @@
 
 .app-main {
   display: flex;
+  flex-direction: column;
   flex: 1;
   overflow: hidden;
 }
 
-.mode-strip {
+/* ─── View Mode Tabs ─── */
+
+.view-mode-tabs {
   display: flex;
-  flex-direction: column;
   gap: 2px;
-  padding: 8px 4px;
+  padding: 8px 12px 0;
   background: #12122a;
-  border-left: 1px solid #0f3460;
-  align-items: center;
+  border-bottom: 1px solid #0f3460;
 }
 
-.mode-btn-sm {
-  writing-mode: vertical-lr;
-  text-orientation: mixed;
+.view-tab {
   background: transparent;
-  border: 1px solid #0f3460;
+  border: 1px solid transparent;
+  border-bottom: none;
   color: #888;
-  padding: 8px 4px;
-  border-radius: 4px;
+  padding: 7px 18px;
+  border-radius: 5px 5px 0 0;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
+  font-family: inherit;
   transition: all 0.12s;
-  letter-spacing: 1px;
+  margin-bottom: -1px;
 }
 
-.mode-btn-sm:hover {
+.view-tab:hover {
   color: #e0e0e0;
-  border-color: #555;
+  background: rgba(255,255,255,0.03);
 }
 
-.mode-btn-sm.active {
-  background: #e94560;
-  color: #fff;
-  border-color: #e94560;
+.view-tab.active {
+  color: #e0e0e0;
+  background: #1a1a2e;
+  border-color: #0f3460;
+}
+
+.view-tab.collections-tab.active {
+  color: #6aaa7a;
+  border-color: #2a5a3a;
+  background: #16213e;
+}
+
+.viewer-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
 }
 
 .viewer-panel {

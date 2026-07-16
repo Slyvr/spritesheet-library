@@ -201,7 +201,8 @@ export default function App() {
       <div className="app-body">
         <div className={`sidebar ${sidebarOpen ? '' : 'collapsed'}`}>
           <div className="sidebar-section-label">{sidebarOpen && 'Sheets'}</div>
-          {SPRITESHEETS.map(sheet => (
+          {SPRITESHEETS.map(sheet => {
+            return (
             <button
               key={sheet.name}
               className={`sidebar-btn ${activeSheet.name === sheet.name && view === 'spritesheet' ? 'active' : ''}`}
@@ -216,17 +217,8 @@ export default function App() {
               </svg>
               {sidebarOpen && <span>{sheet.label}</span>}
             </button>
-          ))}
-          <button
-            className={`sidebar-btn collections-btn ${view === 'collections' ? 'active' : ''}`}
-            onClick={switchToCollections}
-            title={sidebarOpen ? '' : 'Terrain Collections'}
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M2 4h5l2 2h7v8H2V4z" />
-            </svg>
-            {sidebarOpen && <span>Terrain Collections</span>}
-          </button>
+            );
+          })}
 
           <div className="sidebar-spacer" />
 
@@ -246,6 +238,9 @@ export default function App() {
 
         {view === 'collections' ? (
           <main className="app-main">
+            <div className="view-mode-tabs">
+              <button className={`view-tab ${view === 'collections' ? 'active' : ''}`} onClick={switchToCollections}>Terrain Collections</button>
+            </div>
             {loading ? (
               <div className="loading">Loading sprite data...</div>
             ) : spriteData ? (
@@ -261,7 +256,19 @@ export default function App() {
           </main>
         ) : (
           <main className="app-main">
-            <div className="viewer-panel">
+            <div className="view-mode-tabs">
+              <button
+                className={`view-tab ${mode === 'sprite' ? 'active' : ''}`}
+                onClick={() => { setMode('sprite'); setSelectedGroupId(null) }}
+              >Sprite</button>
+              <button
+                className={`view-tab ${mode === 'group' ? 'active' : ''}`}
+                onClick={() => { setMode('group'); setSelectedSprite(null) }}
+              >Group</button>
+              <button className={`view-tab collections-tab ${view === 'collections' ? 'active' : ''}`} onClick={switchToCollections}>Terrain Collections</button>
+            </div>
+            <div className="viewer-content">
+              <div className="viewer-panel">
               {loading ? (
                 <div className="loading">Loading spritesheet data...</div>
               ) : spriteData ? (
@@ -278,16 +285,6 @@ export default function App() {
               ) : (
                 <div className="loading">Failed to load sprite data</div>
               )}
-            </div>
-            <div className="mode-strip">
-              <button
-                className={`mode-btn-sm ${mode === 'sprite' ? 'active' : ''}`}
-                onClick={() => { setMode('sprite'); setSelectedGroupId(null) }}
-              >Sprite</button>
-              <button
-                className={`mode-btn-sm ${mode === 'group' ? 'active' : ''}`}
-                onClick={() => { setMode('group'); setSelectedSprite(null) }}
-              >Group</button>
             </div>
             <aside className="info-panel">
               {mode === 'group' && selectedGroup ? (
@@ -319,6 +316,7 @@ export default function App() {
                 </div>
               )}
             </aside>
+            </div>
           </main>
         )}
       </div>
