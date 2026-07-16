@@ -213,7 +213,7 @@ All endpoints accept and return JSON via `Content-Type: application/json`, excep
 ## Project Structure
 
 ```
-sprite-sheet-tool/
+spritesheet-library/
 ├── client/                         # React frontend (Vite)
 │   ├── src/
 │   │   ├── App.jsx                 # Main app: routing, state, API calls
@@ -239,7 +239,7 @@ sprite-sheet-tool/
 │       └── ... (auto-generated)
 ├── public/spritesheets/            # Spritesheet PNGs
 ├── nginx/
-│   └── sprite-sheet-tool.conf
+│   └── spritesheet-library.conf
 ├── start-server.sh
 ├── .gitignore
 └── README.md

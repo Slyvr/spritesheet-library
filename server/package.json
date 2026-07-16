@@ -1,5 +1,5 @@
 {
-  "name": "sprite-sheet-tool-server",
+  "name": "spritesheet-library-server",
   "version": "1.0.0",
   "type": "commonjs",
   "scripts": {
