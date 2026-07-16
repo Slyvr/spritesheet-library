@@ -6,11 +6,9 @@ import CollectionView from './components/CollectionView'
 import SheetSettings from './components/SheetSettings'
 import './App.css'
 
-const FALLBACK_SHEET = { name: 'base_out_atlas.png', label: 'Base Out Atlas' }
-
 export default function App() {
   const [sheetsList, setSheetsList] = useState([])
-  const [activeSheet, setActiveSheet] = useState(FALLBACK_SHEET)
+  const [activeSheet, setActiveSheet] = useState(null)
   const [spriteData, setSpriteData] = useState(null)
   const [selectedSprite, setSelectedSprite] = useState(null)
   const [selectedRow, setSelectedRow] = useState(null)
@@ -44,7 +42,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    loadSpriteData(activeSheet)
+    if (activeSheet) loadSpriteData(activeSheet)
   }, [activeSheet, loadSpriteData])
 
   // Load spritesheets list
@@ -53,7 +51,7 @@ export default function App() {
       .then(r => r.json())
       .then(list => {
         setSheetsList(list)
-        if (list.length > 0 && !list.some(s => s.name === activeSheet.name)) {
+        if (list.length > 0 && !activeSheet) {
           setActiveSheet(list[0])
         }
       })
@@ -351,6 +349,22 @@ export default function App() {
         </div>
 
         <main className="app-main">
+          {!activeSheet ? (
+            <div className="empty-state">
+              <div className="empty-state-content">
+                <svg width="48" height="48" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 1v8M5 5l4-4 4 4" />
+                  <path d="M1 13v4h16v-4" />
+                </svg>
+                <h2>No spritesheets yet</h2>
+                <p>Upload a PNG spritesheet to get started.</p>
+                <button className="upload-cta" onClick={() => fileInputRef.current?.click()}>
+                  Upload Spritesheet
+                </button>
+              </div>
+            </div>
+          ) : (
+          <>
           <div className="view-mode-tabs">
             <button
               className={`view-tab ${mode === 'sprite' && view === 'spritesheet' ? 'active' : ''}`}
@@ -484,6 +498,8 @@ export default function App() {
               )}
             </aside>
             </div>
+          )}
+          </>
           )}
         </main>
       </div>

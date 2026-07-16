@@ -211,28 +211,17 @@ app.post('/api/upload', upload.fields([
 
 // ── Sprite image serving ──
 
-// GET /api/spritesheet-img/:sheetName - Serve a spritesheet PNG (per-IP upload)
+// GET /api/spritesheet-img/:sheetName - Serve a spritesheet PNG (per-IP only)
 app.get('/api/spritesheet-img/:sheetName', (req, res) => {
   try {
     const { sheetName } = req.params;
     const ip = req.clientIp;
 
-    // Check per-IP uploaded PNGs first
     const png = db.getUploadedPng(ip, sheetName);
     if (png) {
       res.setHeader('Content-Type', 'image/png');
       res.setHeader('Cache-Control', 'private, max-age=3600');
       return res.send(png);
-    }
-
-    // Fallback: global spritesheets directory (base shared assets)
-    const globalPath = path.join(__dirname, '..', 'public', 'spritesheets', sheetName);
-    if (fs.existsSync(globalPath)) {
-      return res.sendFile(globalPath, {
-        headers: {
-          'Cache-Control': 'public, immutable, max-age=31536000',
-        },
-      });
     }
 
     res.status(404).json({ error: 'Spritesheet not found' });
