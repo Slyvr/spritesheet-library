@@ -9,7 +9,7 @@ const SPRITESHEETS = [
   { name: 'terrain_atlas.png', label: 'Terrain Atlas' },
 ]
 
-let groupIdCounter = 0
+let groupIdCounter = 0 // kept for backward compat but new groups now use crypto.randomUUID()
 
 export default function App() {
   const [activeSheet, setActiveSheet] = useState(SPRITESHEETS[0])
@@ -108,7 +108,7 @@ export default function App() {
   const handleCreateGroup = (cells) => {
     if (!cells || cells.length < 2) return
     const newGroup = {
-      id: `g${++groupIdCounter}`,
+      id: `g${crypto.randomUUID().slice(0, 8)}`,
       cells: cells.map(({ row, col }) => ({ row, col })),
       title: '',
       description: '',
