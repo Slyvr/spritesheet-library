@@ -184,6 +184,12 @@
   border-radius: 6px;
   padding: 10px 12px;
   min-width: 200px;
+  cursor: pointer;
+  transition: border-color 0.12s;
+}
+
+.group-card:hover {
+  border-color: #2a5a3a;
 }
 
 .group-card-preview .sprite-image {
@@ -219,4 +225,37 @@
   border-radius: 3px;
   letter-spacing: 0.5px;
   white-space: nowrap;
+}
+
+.group-card-chevron {
+  color: #555;
+  transition: transform 0.15s;
+}
+
+.group-card-chevron.open {
+  transform: rotate(90deg);
+  color: #6aaa7a;
+}
+
+.group-card-wrapper {
+  width: 100%;
+}
+
+.group-card-wrapper.expanded {
+  background: rgba(46, 125, 78, 0.06);
+  border-radius: 8px;
+  padding: 8px;
+  margin: -8px;
+}
+
+.group-card-wrapper.expanded .group-card {
+  border-color: #2a5a3a;
+  margin-bottom: 8px;
+}
+
+.group-card-cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 4px 0 4px 4px;
 }

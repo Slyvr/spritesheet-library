@@ -10,6 +10,7 @@ const DOT_LABELS = {
 
 export default function TerrainCollectionsView({ spriteData, spritesheetName, terrainCategories, onUpdateSprite }) {
   const [selectedCategory, setSelectedCategory] = useState(null)
+  const [expandedGroupId, setExpandedGroupId] = useState(null)
 
   const groups = spriteData?.groups || []
 
@@ -92,7 +93,15 @@ export default function TerrainCollectionsView({ spriteData, spritesheetName, te
             </h2>
             <div className="sprite-grid">
               {filteredGroups.map(group => (
-                <GroupCard key={group.id} group={group} spritesheetName={spritesheetName} />
+                <GroupCard
+                  key={group.id}
+                  group={group}
+                  spritesheetName={spritesheetName}
+                  spriteData={spriteData}
+                  expanded={expandedGroupId === group.id}
+                  onToggle={() => setExpandedGroupId(expandedGroupId === group.id ? null : group.id)}
+                  onToggleDot={(sprite, dotPos) => toggleConstraint(sprite, dotPos)}
+                />
               ))}
               {filteredSprites.map(sprite => (
                 <SpriteCell
@@ -151,36 +160,67 @@ function SpriteCell({ cell, spritesheetName, onToggleDot, dotState }) {
   )
 }
 
-function GroupCard({ group, spritesheetName }) {
+function GroupCard({ group, spritesheetName, spriteData, expanded, onToggle, onToggleDot }) {
   const cellCount = group.cells?.length || 0
   const title = group.title || '(untitled)'
-  // Show first cell as preview
   const first = group.cells?.[0]
   const SPRITE = 32
   const SCALE = 2.5
   const CELL_SIZE = SPRITE * SCALE
 
+  // Look up sprite data for each cell to get current constraints
+  const cellSprites = useMemo(() => {
+    if (!expanded || !spriteData?.sprites) return []
+    return group.cells.map(cell => {
+      const s = spriteData.sprites.find(sp => sp.row === cell.row && sp.col === cell.col)
+      return s || { row: cell.row, col: cell.col, constraints: [] }
+    })
+  }, [expanded, group.cells, spriteData])
+
   return (
-    <div className="group-card">
-      <div className="group-card-preview">
-        {first ? (
-          <div className="sprite-image" style={{
-            width: CELL_SIZE,
-            height: CELL_SIZE,
-            backgroundImage: `url(/spritesheets/${spritesheetName})`,
-            backgroundPosition: `-${first.col * CELL_SIZE}px -${first.row * CELL_SIZE}px`,
-            backgroundSize: `${32 * CELL_SIZE}px ${32 * CELL_SIZE}px`,
-            imageRendering: 'pixelated',
-          }} />
-        ) : (
-          <div className="sprite-image" style={{ width: CELL_SIZE, height: CELL_SIZE, background: '#0d0d1f' }} />
-        )}
+    <div className={`group-card-wrapper ${expanded ? 'expanded' : ''}`}>
+      <div className="group-card" onClick={onToggle}>
+        <div className="group-card-preview">
+          {first ? (
+            <div className="sprite-image" style={{
+              width: CELL_SIZE,
+              height: CELL_SIZE,
+              backgroundImage: `url(/spritesheets/${spritesheetName})`,
+              backgroundPosition: `-${first.col * CELL_SIZE}px -${first.row * CELL_SIZE}px`,
+              backgroundSize: `${32 * CELL_SIZE}px ${32 * CELL_SIZE}px`,
+              imageRendering: 'pixelated',
+            }} />
+          ) : (
+            <div className="sprite-image" style={{ width: CELL_SIZE, height: CELL_SIZE, background: '#0d0d1f' }} />
+          )}
+        </div>
+        <div className="group-card-info">
+          <div className="group-card-title">{title}</div>
+          <div className="group-card-meta">{cellCount} cells</div>
+        </div>
+        <div className="group-card-badge">GROUP</div>
+        <div className={`group-card-chevron ${expanded ? 'open' : ''}`}>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M4 2l4 4-4 4" />
+          </svg>
+        </div>
       </div>
-      <div className="group-card-info">
-        <div className="group-card-title">{title}</div>
-        <div className="group-card-meta">{cellCount} cells</div>
-      </div>
-      <div className="group-card-badge">GROUP</div>
+      {expanded && (
+        <div className="group-card-cells">
+          {cellSprites.map(cell => (
+            <SpriteCell
+              key={`${cell.row}-${cell.col}`}
+              cell={cell}
+              spritesheetName={spritesheetName}
+              onToggleDot={(pos) => onToggleDot(cell, pos)}
+              dotState={DOT_POSITIONS.reduce((acc, p) => {
+                acc[p] = (cell.constraints || []).includes(p)
+                return acc
+              }, {})}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
