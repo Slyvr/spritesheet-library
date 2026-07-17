@@ -65,14 +65,14 @@ export default function TerrainCollectionsView({ spriteData, spritesheetName, te
   const setSpriteConstraints = (sprite, constraints) => {
     onUpdateSprite({
       ...sprite,
-      constraints: constraints.length > 0 ? constraints : undefined,
+      constraints: constraints.length > 0 ? constraints : null,
     })
   }
 
   const resetSpriteConstraints = (sprite) => {
     onUpdateSprite({
       ...sprite,
-      constraints: undefined,
+      constraints: null,
     })
   }
 
