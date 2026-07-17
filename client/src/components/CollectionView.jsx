@@ -108,7 +108,7 @@ function SpriteCell({ cell, spritesheetName, onToggleDot, dotState, onClick }) {
       <div className="sprite-image" style={{
         width: CELL_SIZE,
         height: CELL_SIZE,
-        backgroundImage: `url(/spritesheets/${spritesheetName})`,
+        backgroundImage: `url(/api/spritesheet-img/${spritesheetName})`,
         backgroundPosition: `-${cell.col * CELL_SIZE}px -${cell.row * CELL_SIZE}px`,
         backgroundSize: `${32 * CELL_SIZE}px ${32 * CELL_SIZE}px`,
         imageRendering: 'pixelated',
