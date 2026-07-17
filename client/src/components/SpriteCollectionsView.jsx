@@ -14,10 +14,18 @@ export default function TerrainCollectionsView({ spriteData, spritesheetName, te
 
   const groups = spriteData?.groups || []
 
-  // Count sprites and groups per terrain category
+  // Count sprites and groups per terrain category.
+  // Discovers categories from the master list, plus any set on sprites/groups.
   const categoryMap = useMemo(() => {
     const map = {}
-    for (const cat of terrainCategories) {
+    const allCats = new Set(terrainCategories)
+    for (const s of spriteData?.sprites || []) {
+      if (s.terrainCategory) allCats.add(s.terrainCategory)
+    }
+    for (const g of groups) {
+      if (g.terrainCategory) allCats.add(g.terrainCategory)
+    }
+    for (const cat of allCats) {
       const spriteCount = (spriteData?.sprites || []).filter(s => s.terrainCategory === cat).length
       const groupCount = groups.filter(g => g.terrainCategory === cat).length
       if (spriteCount > 0 || groupCount > 0) {
@@ -137,7 +145,7 @@ function SpriteCell({ cell, spritesheetName, onToggleDot, dotState }) {
       <div className="sprite-image" style={{
         width: CELL_SIZE,
         height: CELL_SIZE,
-        backgroundImage: `url(/spritesheets/${spritesheetName})`,
+        backgroundImage: `url(/api/spritesheet-img/${spritesheetName})`,
         backgroundPosition: `-${cell.col * CELL_SIZE}px -${cell.row * CELL_SIZE}px`,
         backgroundSize: `${32 * CELL_SIZE}px ${32 * CELL_SIZE}px`,
         imageRendering: 'pixelated',
@@ -185,7 +193,7 @@ function GroupCard({ group, spritesheetName, spriteData, expanded, onToggle, onT
             <div className="sprite-image" style={{
               width: CELL_SIZE,
               height: CELL_SIZE,
-              backgroundImage: `url(/spritesheets/${spritesheetName})`,
+              backgroundImage: `url(/api/spritesheet-img/${spritesheetName})`,
               backgroundPosition: `-${first.col * CELL_SIZE}px -${first.row * CELL_SIZE}px`,
               backgroundSize: `${32 * CELL_SIZE}px ${32 * CELL_SIZE}px`,
               imageRendering: 'pixelated',

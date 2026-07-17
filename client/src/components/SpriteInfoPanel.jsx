@@ -309,7 +309,7 @@ function SpritePreview({ sprite, spritesheetName }) {
       <div className="preview-canvas" style={{ width: 96, height: 96, position: 'relative', overflow: 'hidden', background: '#0d0d1f', border: '1px solid #0f3460', borderRadius: 4 }}>
         <div style={{
           width: 96, height: 96,
-          backgroundImage: `url(/spritesheets/${spritesheetName})`,
+          backgroundImage: `url(/api/spritesheet-img/${spritesheetName})`,
           backgroundPosition: `-${sprite.col * 96}px -${sprite.row * 96}px`,
           backgroundSize: `${32 * 96}px ${32 * 96}px`,
           imageRendering: 'pixelated',
